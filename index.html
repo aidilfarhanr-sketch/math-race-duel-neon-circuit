@@ -1,0 +1,5579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Race Duel Neon Circuit - Math Racing Game</title>
+  <style>
+    :root{
+      --bg:#050715;
+      --panel:#0b1024cc;
+      --panel-solid:#0b1024;
+      --line:#1e2a59;
+      --text:#f7fbff;
+      --muted:#93a4c8;
+      --cyan:#2ee9ff;
+      --blue:#4f7cff;
+      --purple:#9b5cff;
+      --pink:#ff4fd8;
+      --red:#ff4b6a;
+      --yellow:#ffe066;
+      --green:#55ff9a;
+      --orange:#ff9f43;
+      --shadow:0 20px 70px rgba(0,0,0,.45);
+      --radius:24px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    html,body{height:100%}
+    button, input, .mode-card, .social-link{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    button, .calc-key, .mode-card, .social-link{user-select:none}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 18% 10%, rgba(46,233,255,.18), transparent 30%),
+        radial-gradient(circle at 82% 0%, rgba(255,79,216,.16), transparent 34%),
+        radial-gradient(circle at 50% 100%, rgba(79,124,255,.14), transparent 35%),
+        linear-gradient(135deg, #030411, #080c1e 45%, #050715);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.28;
+      background-image:
+        linear-gradient(rgba(46,233,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(46,233,255,.08) 1px, transparent 1px);
+      background-size:44px 44px;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.9), rgba(0,0,0,.2));
+    }
+
+    .app{
+      width:min(1480px, calc(100% - 28px));
+      margin:0 auto;
+      padding:28px 0 44px;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:18px;
+      margin-bottom:18px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .logo{
+      width:58px;
+      height:58px;
+      border-radius:20px;
+      background:linear-gradient(135deg, var(--cyan), var(--purple), var(--pink));
+      display:grid;
+      place-items:center;
+      box-shadow:0 0 32px rgba(46,233,255,.35);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .logo::after{
+      content:"";
+      position:absolute;
+      inset:-60%;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+      transform:rotate(35deg) translateX(-50%);
+      animation:shine 4s infinite;
+    }
+
+    .logo svg{width:34px;height:34px;z-index:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+
+    h1{
+      font-size:clamp(28px, 4vw, 56px);
+      line-height:.92;
+      margin:0;
+      letter-spacing:-1.6px;
+      text-transform:uppercase;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      margin:7px 0 0;
+      font-size:14px;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:0;
+      color:var(--text);
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.2px;
+      border-radius:16px;
+      padding:13px 17px;
+      transition:.2s ease;
+      font-family:inherit;
+    }
+
+    button:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
+
+    .btn-primary{
+      background:linear-gradient(135deg, var(--cyan), var(--blue));
+      color:#03111c;
+      box-shadow:0 14px 32px rgba(46,233,255,.25);
+    }
+    .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 18px 42px rgba(46,233,255,.34)}
+
+    .btn-ghost{
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(12px);
+    }
+    .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.12);transform:translateY(-2px)}
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 13px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 16px var(--red)}
+    .dot.live{background:var(--green);box-shadow:0 0 16px var(--green)}
+
+    .arena{
+      display:grid;
+      gap:18px;
+    }
+
+    .player-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+    }
+
+    .card{
+      position:relative;
+      background:linear-gradient(180deg, rgba(14,20,46,.86), rgba(9,13,31,.74));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter:blur(18px);
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at 22% 0%, rgba(46,233,255,.16), transparent 34%),
+                 radial-gradient(circle at 90% 14%, rgba(255,79,216,.1), transparent 32%);
+      pointer-events:none;
+    }
+
+    .player-card{
+      padding:20px;
+      isolation:isolate;
+    }
+
+    .player-card.p1{--accent:var(--cyan);--accent2:var(--blue)}
+    .player-card.p2{--accent:var(--pink);--accent2:var(--orange)}
+
+    .player-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:14px;
+      position:relative;
+      z-index:1;
+    }
+
+    .player-title{
+      display:flex;
+      align-items:center;
+      gap:11px;
+    }
+
+    .avatar{
+      width:44px;
+      height:44px;
+      border-radius:16px;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow:0 0 22px color-mix(in srgb, var(--accent) 45%, transparent);
+      display:grid;
+      place-items:center;
+      color:#06101d;
+      font-weight:1000;
+      font-size:18px;
+    }
+
+    h2{margin:0;font-size:20px}
+    .hint{color:var(--muted);font-size:12px;margin-top:4px}
+
+    .level-badge{
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--accent);
+      font-weight:900;
+      min-width:86px;
+      text-align:center;
+    }
+
+    .question-box{
+      position:relative;
+      z-index:1;
+      padding:18px;
+      border-radius:20px;
+      background:rgba(0,0,0,.2);
+      border:1px solid rgba(255,255,255,.1);
+      margin-bottom:14px;
+    }
+
+    .question-label{
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      margin-bottom:8px;
+    }
+
+    .question{
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      font-size:clamp(28px, 3vw, 44px);
+      font-weight:1000;
+      letter-spacing:-.8px;
+      text-shadow:0 0 28px color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+
+    .question sup,
+    .question .math-exp{
+      font-size:.55em;
+      line-height:0;
+      vertical-align:super;
+      margin-left:.04em;
+      position:relative;
+      top:-.1em;
+    }
+
+    .question .sqrt-wrap{
+      display:inline-flex;
+      align-items:flex-start;
+      vertical-align:middle;
+      line-height:1;
+      margin:0 .08em;
+      transform:translateY(.03em);
+    }
+
+    .question .sqrt-symbol{
+      font-size:1.12em;
+      line-height:.95;
+      font-weight:1000;
+      margin-right:.03em;
+    }
+
+    .question .sqrt-radicand{
+      display:inline-block;
+      min-width:.55em;
+      padding:.02em .12em 0 .12em;
+      border-top:.095em solid currentColor;
+      line-height:.92;
+    }
+
+    .question .math-base{
+      display:inline-block;
+    }
+
+    .answer-row{
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    input[type="number"]{
+      width:100%;
+      color:var(--text);
+      font-size:20px;
+      font-weight:800;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      outline:none;
+      padding:14px 15px;
+      background:rgba(255,255,255,.07);
+      transition:.2s ease;
+      font-family:inherit;
+    }
+    input[type="number"]:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent), 0 0 26px color-mix(in srgb, var(--accent) 16%, transparent);
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{appearance:none;margin:0}
+
+    .submit-btn{
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#06101d;
+      min-width:112px;
+      box-shadow:0 12px 26px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    .submit-btn:hover:not(:disabled){transform:translateY(-2px)}
+
+    .timer-wrap{
+      position:relative;
+      z-index:1;
+      margin-bottom:14px;
+    }
+    .timer-meta{
+      display:flex;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+    .timer-track{
+      height:12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+    }
+    .timer-fill{
+      width:100%;height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--accent), var(--yellow));
+      box-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+      transform-origin:left;
+      transition:width .08s linear;
+    }
+    .timer-fill.danger{background:linear-gradient(90deg, var(--red), var(--orange));box-shadow:0 0 20px rgba(255,75,106,.5)}
+
+    .stats{
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:10px;
+    }
+    .stat{
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.065);
+      border:1px solid rgba(255,255,255,.1);
+      min-height:68px;
+    }
+    .stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .stat strong{font-size:20px;letter-spacing:-.3px}
+
+    .feedback{
+      position:absolute;
+      right:18px;
+      bottom:100px;
+      z-index:3;
+      padding:9px 12px;
+      border-radius:999px;
+      font-weight:1000;
+      font-size:13px;
+      background:rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.15);
+      opacity:0;
+      transform:translateY(10px) scale(.96);
+      pointer-events:none;
+    }
+    .feedback.show{animation:pop .9s ease forwards}
+    .feedback.good{color:var(--green);box-shadow:0 0 22px rgba(85,255,154,.18)}
+    .feedback.bad{color:var(--red);box-shadow:0 0 22px rgba(255,75,106,.18)}
+    .feedback.level{color:var(--yellow);box-shadow:0 0 22px rgba(255,224,102,.18)}
+
+    .shake{animation:shake .38s ease}
+
+    .track-card{
+      padding:22px;
+      min-height:344px;
+    }
+
+    .race-header{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .race-header h3{font-size:22px;margin:0;letter-spacing:-.4px}
+    .race-header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+    .track-shell{
+      position:relative;
+      z-index:1;
+      display:grid;
+      gap:18px;
+    }
+
+    .lane{
+      position:relative;
+      min-height:92px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.055) 0 49%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.055) 51% 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 24px, transparent 24px 64px),
+        linear-gradient(180deg, rgba(13,18,42,.92), rgba(5,7,17,.88));
+      overflow:hidden;
+      box-shadow:inset 0 0 32px rgba(0,0,0,.34);
+    }
+    .lane::before{
+      content:"";
+      position:absolute;
+      left:0;right:0;top:50%;
+      height:2px;
+      background:repeating-linear-gradient(90deg, rgba(255,255,255,.34) 0 34px, transparent 34px 72px);
+      opacity:.45;
+    }
+    .lane::after{
+      content:"FINISH";
+      position:absolute;
+      right:12px;
+      top:8px;
+      bottom:8px;
+      width:42px;
+      display:grid;
+      place-items:center;
+      color:#07101a;
+      font-size:10px;
+      font-weight:1000;
+      writing-mode:vertical-rl;
+      letter-spacing:.14em;
+      border-radius:12px;
+      background:
+        conic-gradient(#fff 25%, #101010 0 50%, #fff 0 75%, #101010 0) 0 0/18px 18px;
+      box-shadow:0 0 18px rgba(255,255,255,.22);
+    }
+
+    .lane-name{
+      position:absolute;
+      top:10px;
+      left:14px;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(255,255,255,.76);
+      z-index:3;
+      text-shadow:0 2px 8px rgba(0,0,0,.5);
+    }
+
+    .car{
+      position:absolute;
+      left:18px;
+      top:46px;
+      width:76px;
+      height:34px;
+      transform:translateY(-50%);
+      transition:left .45s cubic-bezier(.2,.92,.2,1.1), filter .2s ease;
+      z-index:4;
+      filter:drop-shadow(0 10px 16px rgba(0,0,0,.45));
+    }
+    .car-body{
+      position:absolute;
+      inset:7px 6px 8px;
+      border-radius:18px 22px 13px 13px;
+      background:linear-gradient(135deg, var(--car1), var(--car2));
+      box-shadow:0 0 26px color-mix(in srgb, var(--car1) 38%, transparent);
+    }
+    .car-top{
+      position:absolute;
+      left:24px;
+      top:0;
+      width:28px;
+      height:18px;
+      border-radius:16px 16px 4px 4px;
+      background:linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,255,255,.25));
+      border:1px solid rgba(255,255,255,.36);
+    }
+    .wheel{
+      position:absolute;
+      bottom:0;
+      width:15px;
+      height:15px;
+      border-radius:50%;
+      background:#05070d;
+      border:3px solid rgba(255,255,255,.35);
+      box-shadow:inset 0 0 0 2px #11182f;
+    }
+    .wheel.left{left:14px}.wheel.right{right:13px}
+    .car.p1{--car1:var(--cyan);--car2:var(--blue)}
+    .car.p2{--car1:var(--pink);--car2:var(--orange)}
+    .car.nitro{filter:drop-shadow(0 0 20px var(--car1)) drop-shadow(0 12px 18px rgba(0,0,0,.45))}
+    .car.nitro::before{
+      content:"";
+      position:absolute;
+      left:-32px;
+      top:12px;
+      width:36px;
+      height:12px;
+      border-radius:999px;
+      background:linear-gradient(90deg, transparent, var(--yellow), var(--car1));
+      filter:blur(.2px);
+      animation:flame .16s infinite alternate;
+    }
+
+    .progress-panel{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-top:16px;
+    }
+    .progress-card{
+      border-radius:18px;
+      padding:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);
+    }
+    .progress-top{
+      display:flex;
+      justify-content:space-between;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:800;
+      margin-bottom:9px;
+    }
+    .progress-track{
+      height:13px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .progress-fill{
+      width:0;height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      transition:width .45s ease;
+    }
+    .progress-card.p1{--accent:var(--cyan);--accent2:var(--blue)}
+    .progress-card.p2{--accent:var(--pink);--accent2:var(--orange)}
+
+    .rules{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:18px;
+    }
+    .rules .card{padding:20px}
+    .rules h3{margin:0 0 12px;font-size:19px}
+    .rule-list{display:grid;gap:10px;margin:0;padding:0;list-style:none;color:var(--muted);font-size:14px;line-height:1.55;position:relative;z-index:1}
+    .rule-list li{display:flex;gap:10px;align-items:flex-start}
+    .rule-list b{color:var(--text)}
+    .kbd{
+      display:inline-flex;
+      min-width:28px;
+      justify-content:center;
+      align-items:center;
+      padding:3px 8px;
+      border-radius:8px;
+      background:rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--text);
+      font-weight:900;
+      font-size:12px;
+    }
+    .level-table{width:100%;border-collapse:collapse;position:relative;z-index:1;overflow:hidden;border-radius:16px;font-size:13px}
+    .level-table th,.level-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;color:var(--muted)}
+    .level-table th{color:var(--text);background:rgba(255,255,255,.07);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .level-table tr:last-child td{border-bottom:0}
+    .level-table strong{color:var(--text)}
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:99;
+      background:rgba(1,3,12,.72);
+      backdrop-filter:blur(10px);
+    }
+    .modal.show{display:flex}
+    .modal-card{
+      width:min(560px, 100%);
+      border-radius:30px;
+      background:linear-gradient(180deg, rgba(14,20,46,.96), rgba(6,9,24,.96));
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 28px 90px rgba(0,0,0,.55);
+      padding:28px;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .modal-card::before{
+      content:"";position:absolute;inset:-1px;
+      background:radial-gradient(circle at 50% 0%, rgba(46,233,255,.22), transparent 42%), radial-gradient(circle at 80% 25%, rgba(255,79,216,.15), transparent 40%);
+      pointer-events:none;
+    }
+    .modal-card > *{position:relative;z-index:1}
+    .winner-icon{font-size:56px;margin-bottom:8px}
+    .modal h2{font-size:clamp(30px, 4vw, 46px);margin:0 0 10px;text-transform:uppercase;letter-spacing:-1px}
+    .modal p{color:var(--muted);margin:0 0 20px;line-height:1.6}
+    .winner-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+    .winner-stats div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px}
+    .winner-stats span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+    .winner-stats strong{font-size:22px}
+
+    .toast-stack{
+      position:fixed;
+      right:18px;
+      top:18px;
+      z-index:80;
+      display:grid;
+      gap:10px;
+      pointer-events:none;
+    }
+    .toast{
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(8,12,28,.88);
+      backdrop-filter:blur(14px);
+      box-shadow:0 14px 38px rgba(0,0,0,.32);
+      min-width:250px;
+      color:var(--text);
+      animation:toastIn .28s ease forwards, toastOut .28s ease forwards 2.45s;
+    }
+    .toast b{display:block;margin-bottom:3px}
+    .toast span{color:var(--muted);font-size:13px}
+
+    .countdown{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      place-items:center;
+      background:rgba(1,3,12,.56);
+      backdrop-filter:blur(5px);
+      font-size:clamp(72px, 18vw, 190px);
+      font-weight:1000;
+      color:var(--cyan);
+      text-shadow:0 0 54px rgba(46,233,255,.62);
+    }
+    .countdown.show{display:grid;animation:pulse .8s ease infinite}
+
+    @keyframes shine{0%,45%{transform:rotate(35deg) translateX(-130%)}65%,100%{transform:rotate(35deg) translateX(130%)}}
+    @keyframes pop{0%{opacity:0;transform:translateY(12px) scale(.92)}18%{opacity:1;transform:translateY(0) scale(1.04)}78%{opacity:1;transform:translateY(-6px) scale(1)}100%{opacity:0;transform:translateY(-16px) scale(.96)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+    @keyframes flame{from{transform:scaleX(.75);opacity:.72}to{transform:scaleX(1.08);opacity:1}}
+    @keyframes toastIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(18px)}}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.82}}
+    @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+    .confetti{
+      position:fixed;
+      top:-20px;
+      width:10px;
+      height:16px;
+      border-radius:3px;
+      z-index:120;
+      animation:confettiFall 2.6s ease-in forwards;
+      pointer-events:none;
+    }
+
+
+    .duel-layout{
+      align-items:stretch;
+    }
+
+    .player-arena{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .player-arena .question-box,
+    .player-arena .answer-row,
+    .player-arena .timer-wrap,
+    .player-arena .stats,
+    .player-arena .player-race-zone{
+      margin-bottom:0;
+    }
+
+    .player-race-zone{
+      position:relative;
+      z-index:1;
+      border-radius:22px;
+      padding:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:inset 0 0 28px rgba(0,0,0,.22);
+    }
+
+    .mini-race-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .mini-race-header h3{
+      margin:0;
+      font-size:16px;
+      letter-spacing:-.2px;
+    }
+
+    .mini-race-header h3 span{
+      color:var(--accent);
+    }
+
+    .mini-race-header p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .mini-finish{
+      flex-shrink:0;
+      padding:8px 11px;
+      font-size:12px;
+    }
+
+    .single-track{
+      gap:0;
+    }
+
+    .single-progress{
+      grid-template-columns:1fr;
+      margin-top:12px;
+    }
+
+    .player-arena .lane{
+      min-height:108px;
+    }
+
+    .player-arena .car{
+      top:54px;
+    }
+
+    .player-arena .feedback{
+      bottom:170px;
+    }
+
+
+    .player-card.eliminated{
+      opacity:.58;
+      filter:grayscale(.65);
+    }
+    .player-card.eliminated::after{
+      content:"TERELIMINASI";
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      font-size:clamp(28px, 4vw, 48px);
+      font-weight:1000;
+      letter-spacing:.12em;
+      color:rgba(255,75,106,.92);
+      background:rgba(1,3,12,.48);
+      text-shadow:0 0 24px rgba(255,75,106,.55);
+      z-index:5;
+      pointer-events:none;
+    }
+
+    .player-card.answer-locked .answer-row,
+    .player-card.answer-locked .calculator-panel{
+      opacity:.56;
+      filter:saturate(.72);
+    }
+
+    .player-card.answer-locked .question-box::after{
+      content:"JAWABAN DIKUNCI";
+      position:absolute;
+      right:12px;
+      top:12px;
+      padding:5px 8px;
+      border-radius:999px;
+      color:#06101d;
+      background:linear-gradient(135deg, var(--yellow), var(--orange));
+      font-size:9px;
+      font-weight:1000;
+      letter-spacing:.09em;
+      box-shadow:0 0 16px rgba(255,224,102,.34);
+      pointer-events:none;
+    }
+
+
+    .mode-select-grid{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:12px;
+      margin:18px 0 16px;
+      text-align:left;
+    }
+    .mode-card{
+      display:block;
+      cursor:pointer;
+      min-height:100%;
+    }
+    .mode-card input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+    .mode-box{
+      height:100%;
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.065);
+      border:1px solid rgba(255,255,255,.12);
+      transition:.2s ease;
+      display:grid;
+      gap:7px;
+    }
+    .mode-box strong{
+      color:var(--text);
+      font-size:15px;
+      letter-spacing:-.2px;
+    }
+    .mode-box span{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .mode-card input:checked + .mode-box{
+      border-color:var(--cyan);
+      background:linear-gradient(180deg, rgba(46,233,255,.18), rgba(79,124,255,.08));
+      box-shadow:0 0 0 4px rgba(46,233,255,.12), 0 16px 34px rgba(46,233,255,.12);
+      transform:translateY(-2px);
+    }
+    .mode-guide{
+      position:relative;
+      z-index:1;
+      color:var(--muted);
+      margin:0 0 12px;
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .setup-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin:18px 0 12px;
+      text-align:left;
+    }
+    .name-field label{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:8px;
+    }
+    .name-field input{
+      width:100%;
+      color:var(--text);
+      font-size:17px;
+      font-weight:800;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      outline:none;
+      padding:14px 15px;
+      background:rgba(255,255,255,.07);
+      transition:.2s ease;
+      font-family:inherit;
+    }
+    .name-field input:focus{
+      border-color:var(--cyan);
+      box-shadow:0 0 0 4px rgba(46,233,255,.14);
+    }
+    .setup-note{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+      margin:10px 0 18px;
+    }
+
+    .leaderboard-card{
+      padding:20px;
+    }
+    .leaderboard-head{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .leaderboard-head h3{margin:0;font-size:20px}
+    .leaderboard-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .leaderboard-table{
+      width:100%;
+      border-collapse:collapse;
+      position:relative;
+      z-index:1;
+      overflow:hidden;
+      border-radius:16px;
+      font-size:13px;
+    }
+    .leaderboard-table th,.leaderboard-table td{
+      padding:11px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .leaderboard-table th{
+      color:var(--text);
+      background:rgba(255,255,255,.07);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .leaderboard-table tr:last-child td{border-bottom:0}
+    .leaderboard-table strong{color:var(--text)}
+    .leaderboard-empty{
+      color:var(--muted);
+      padding:14px;
+      border:1px dashed rgba(255,255,255,.16);
+      border-radius:16px;
+      position:relative;
+      z-index:1;
+    }
+
+
+    .creator-footer{
+      padding:24px;
+      overflow:hidden;
+    }
+    .creator-footer::after{
+      content:"";
+      position:absolute;
+      inset:auto -12% -42% -12%;
+      height:150px;
+      background:radial-gradient(circle at 25% 50%, rgba(46,233,255,.24), transparent 40%),
+                 radial-gradient(circle at 78% 42%, rgba(255,79,216,.18), transparent 42%);
+      pointer-events:none;
+    }
+    .footer-content{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .footer-brand h3{
+      margin:0;
+      font-size:clamp(19px, 2vw, 25px);
+      letter-spacing:-.4px;
+      text-transform:uppercase;
+    }
+    .footer-brand h3 span{
+      background:linear-gradient(135deg, var(--cyan), var(--blue), var(--pink));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .footer-brand p{
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+    .footer-socials{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .social-link{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      color:var(--text);
+      text-decoration:none;
+      background:rgba(255,255,255,.075);
+      border:1px solid rgba(255,255,255,.13);
+      box-shadow:0 12px 28px rgba(0,0,0,.22);
+      transition:.22s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .social-link::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.78;
+      background:linear-gradient(135deg, var(--social-a), var(--social-b));
+      transform:translateY(100%);
+      transition:.24s ease;
+    }
+    .social-link svg{
+      position:relative;
+      z-index:1;
+      width:23px;
+      height:23px;
+      fill:currentColor;
+      filter:drop-shadow(0 5px 12px rgba(0,0,0,.3));
+    }
+    .social-link:hover{
+      transform:translateY(-4px) scale(1.03);
+      border-color:rgba(255,255,255,.26);
+      box-shadow:0 18px 38px color-mix(in srgb, var(--social-a) 24%, transparent);
+    }
+    .social-link:hover::before{transform:translateY(0)}
+    .social-link.instagram{--social-a:#ff4fd8;--social-b:#ff9f43}
+    .social-link.tiktok{--social-a:#2ee9ff;--social-b:#ff4b6a}
+    .social-link.linkedin{--social-a:#0a66c2;--social-b:#2ee9ff}
+    .social-link.youtube{--social-a:#ff0033;--social-b:#ff6b6b}
+
+
+    .touch-note{
+      position:relative;
+      z-index:1;
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .touch-note strong{color:var(--text)}
+
+    .calculator-panel{
+      position:relative;
+      z-index:1;
+      border-radius:22px;
+      padding:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:inset 0 0 30px rgba(0,0,0,.22);
+      display:grid;
+      gap:12px;
+    }
+    .calculator-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+    .calculator-head span:last-child{
+      color:var(--accent);
+      letter-spacing:0;
+      text-transform:none;
+      font-size:12px;
+    }
+    .calc-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:10px;
+    }
+    .calc-key{
+      min-height:58px;
+      border-radius:16px;
+      padding:0;
+      display:grid;
+      place-items:center;
+      font-size:clamp(18px, 2vw, 25px);
+      font-weight:1000;
+      color:var(--text);
+      background:rgba(255,255,255,.075);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02), 0 10px 24px rgba(0,0,0,.16);
+    }
+    .calc-key:hover:not(:disabled),
+    .calc-key:focus-visible:not(:disabled){
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.12);
+      box-shadow:0 16px 34px color-mix(in srgb, var(--accent) 14%, transparent);
+      outline:none;
+    }
+    .calc-key:active:not(:disabled){transform:translateY(1px) scale(.98)}
+    .calc-key:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.4)}
+    .calc-key.danger{
+      background:linear-gradient(135deg, rgba(255,75,106,.95), rgba(255,159,67,.72));
+      color:#fff;
+    }
+    .calc-key.utility{
+      color:var(--yellow);
+    }
+    .calc-key.go{
+      grid-column:span 2;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#06101d;
+      box-shadow:0 14px 30px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    .calc-key.zero{grid-column:span 2}
+    .player-card.p1 .calculator-panel{--accent:var(--cyan);--accent2:var(--blue)}
+    .player-card.p2 .calculator-panel{--accent:var(--pink);--accent2:var(--orange)}
+
+    .answer-row input[readonly]{
+      cursor:default;
+      text-align:center;
+      font-size:clamp(20px, 2vw, 28px);
+      letter-spacing:.04em;
+    }
+    .answer-row input[readonly]::placeholder{letter-spacing:0;text-align:left}
+
+    @media (pointer: coarse){
+      button{min-height:46px}
+      .calc-key{min-height:68px;font-size:clamp(22px, 5vw, 30px)}
+      .answer-row input[readonly]{min-height:58px}
+      .submit-btn{min-height:58px}
+      .mode-box{min-height:116px}
+    }
+
+    @media (min-width: 1500px){
+      .app{width:min(1740px, calc(100% - 48px));padding-top:34px}
+      .player-grid{gap:24px}
+      .arena{gap:24px}
+      .player-card{padding:26px}
+      .question{font-size:clamp(42px, 3vw, 64px);min-height:76px}
+      .lane{min-height:124px}
+      .player-arena .lane{min-height:132px}
+      .player-arena .car{top:66px;transform:translateY(-50%) scale(1.12)}
+      .calc-key{min-height:76px;font-size:30px;border-radius:20px}
+      .answer-row input[readonly]{min-height:70px;font-size:30px}
+      .submit-btn{min-height:70px;font-size:18px}
+      .stat{min-height:82px}
+      .stat strong{font-size:26px}
+      .top-actions .status-pill,.top-actions button{font-size:15px}
+    }
+
+    @media (min-width: 1900px){
+      .app{width:min(1880px, calc(100% - 72px))}
+      h1{font-size:72px}
+      .subtitle{font-size:18px;max-width:900px}
+      .player-head h2{font-size:28px}
+      .hint{font-size:15px}
+      .level-badge{font-size:18px;min-width:116px;padding:14px 18px}
+      .timer-meta{font-size:16px}
+      .timer-track{height:16px}
+      .calculator-head{font-size:14px}
+      .calc-key{min-height:86px;font-size:34px}
+      .rules h3,.leaderboard-head h3{font-size:28px}
+      .rule-list,.level-table,.leaderboard-table{font-size:16px}
+    }
+
+
+    @media (max-width: 980px){
+      .footer-content{flex-direction:column;text-align:center;align-items:center}
+      .footer-socials{justify-content:center}
+      .topbar{align-items:flex-start;flex-direction:column}
+      .top-actions{justify-content:flex-start}
+      .player-grid,.rules,.progress-panel,.setup-grid,.mode-select-grid{grid-template-columns:1fr}
+      .track-card{padding:16px}
+      .stats{grid-template-columns:repeat(2, 1fr)}
+      .answer-row{grid-template-columns:1fr}
+      .submit-btn{width:100%}
+    }
+
+    @media (max-width: 760px){
+      .app{width:min(100% - 14px, 1280px);padding:14px 0 34px}
+      .topbar{gap:14px;margin-bottom:14px}
+      .brand{gap:10px}
+      h1{font-size:clamp(30px, 11vw, 52px)}
+      .subtitle{font-size:13px;line-height:1.45}
+      .top-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+      .top-actions .status-pill,.top-actions button{width:100%;justify-content:center;padding:12px 10px}
+      .player-grid{gap:14px}
+      .player-card{gap:12px}
+      .player-head{align-items:center}
+      .question-box{padding:15px}
+      .question{font-size:clamp(32px, 12vw, 48px);justify-content:center;text-align:center}
+      .calc-grid{gap:8px}
+      .calc-key{min-height:62px;border-radius:15px}
+      .answer-row{grid-template-columns:1fr;gap:8px}
+      .answer-row input[readonly]::placeholder{text-align:center}
+      .submit-btn{width:100%}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .rules{grid-template-columns:1fr}
+      .leaderboard-head{flex-direction:column;align-items:stretch}
+      .leaderboard-table{display:block;overflow-x:auto}
+    }
+
+    @media (max-width: 420px){
+      .calc-grid{grid-template-columns:repeat(3, minmax(0, 1fr))}
+      .calc-key.zero,.calc-key.go{grid-column:span 1}
+      .calculator-head{align-items:flex-start;flex-direction:column;letter-spacing:.08em}
+      .stats{grid-template-columns:1fr 1fr}
+      .stat{padding:10px;min-height:62px}
+      .stat strong{font-size:18px}
+      .mini-race-header{flex-direction:column}
+      .mini-finish{width:100%;justify-content:center}
+    }
+ 
+
+    @media (max-width: 560px){
+      .creator-footer{padding:18px;border-radius:20px}
+      .social-link{width:44px;height:44px;border-radius:15px}
+      .app{width:min(100% - 18px, 1280px);padding-top:18px}
+      .brand{align-items:flex-start}.logo{width:50px;height:50px;border-radius:17px}
+      .top-actions{width:100%}.top-actions button,.status-pill{flex:1;justify-content:center}
+      .player-card,.rules .card{padding:16px;border-radius:20px}
+      .question{font-size:30px}
+      .lane{min-height:82px}.car{width:66px;height:30px;top:42px}.lane::after{width:34px;right:8px}
+      .winner-stats{grid-template-columns:1fr}
+    }
+
+    /* === Compact responsive gameplay layout: HP, laptop/Windows, TV, touchscreen === */
+    .main-play-area{scroll-margin-top:12px}
+
+    @media (min-width: 981px){
+      .app{
+        width:min(1640px, calc(100% - 24px));
+        padding:16px 0 28px;
+      }
+      .topbar{
+        margin-bottom:12px;
+        gap:14px;
+      }
+      .logo{width:50px;height:50px;border-radius:18px}
+      .logo svg{width:30px;height:30px}
+      h1{font-size:clamp(30px, 3.4vw, 48px)}
+      .subtitle{font-size:13px;margin-top:4px;max-width:720px}
+      .top-actions{gap:8px}
+      button{padding:11px 14px;border-radius:14px}
+      .status-pill{padding:9px 12px;font-size:12px}
+      .arena{gap:14px}
+      .player-grid{gap:14px;align-items:start}
+      .player-card{
+        padding:14px;
+        border-radius:22px;
+        gap:9px;
+      }
+      .player-head{margin-bottom:0;gap:10px;align-items:center}
+      .avatar{width:38px;height:38px;border-radius:14px;font-size:15px}
+      h2{font-size:18px}
+      .hint{font-size:11px;margin-top:2px}
+      .level-badge{padding:8px 10px;min-width:76px;border-radius:13px;font-size:14px}
+      .timer-wrap{margin-bottom:0}
+      .timer-meta{font-size:12px;margin-bottom:5px}
+      .timer-track{height:9px}
+      .question-box{padding:12px 14px;border-radius:18px;margin-bottom:0}
+      .question-label{font-size:10px;margin-bottom:5px;letter-spacing:.12em}
+      .question{min-height:42px;font-size:clamp(26px, 2.3vw, 36px);line-height:1.1}
+      .player-race-zone{padding:10px;border-radius:18px}
+      .mini-race-header{margin-bottom:7px;align-items:center}
+      .mini-race-header h3{font-size:14px}
+      .mini-race-header p{font-size:11px;margin-top:2px}
+      .mini-finish{padding:6px 9px;font-size:11px}
+      .player-arena .lane{min-height:74px;border-radius:18px}
+      .player-arena .car{width:64px;height:29px;top:38px}
+      .lane::after{width:34px;right:8px;top:6px;bottom:6px;font-size:8px;border-radius:10px}
+      .lane-name{top:8px;left:12px;font-size:10px}
+      .progress-panel.single-progress{margin-top:8px}
+      .progress-card{padding:8px 10px;border-radius:14px}
+      .progress-top{font-size:11px;margin-bottom:5px}
+      .progress-track{height:9px}
+      .answer-row{gap:8px;margin-bottom:0}
+      input[type="number"]{
+        min-height:48px;
+        padding:10px 12px;
+        border-radius:14px;
+        font-size:clamp(22px, 2.2vw, 30px);
+      }
+      .submit-btn{min-width:96px;padding:10px 12px;border-radius:14px}
+      .calculator-panel{padding:9px;border-radius:18px}
+      .calculator-head{font-size:11px;margin-bottom:7px;letter-spacing:.12em}
+      .calc-grid{gap:7px}
+      .calc-key{
+        min-height:44px;
+        border-radius:14px;
+        font-size:clamp(20px, 2vw, 27px);
+      }
+      .calc-key.go{font-size:clamp(20px, 2vw, 28px)}
+      .stats{grid-template-columns:repeat(6, minmax(0, 1fr));gap:7px}
+      .stat{min-height:45px;padding:7px 8px;border-radius:13px}
+      .stat span{font-size:9px;margin-bottom:3px;letter-spacing:.08em}
+      .stat strong{font-size:18px}
+      .leaderboard-card,.rules,.creator-footer{margin-top:2px}
+    }
+
+    @media (min-width: 981px) and (max-height: 820px){
+      .app{padding-top:10px}
+      .subtitle,.hint,.mini-race-header p{display:none}
+      .topbar{margin-bottom:8px}
+      .player-card{padding:11px;gap:7px}
+      .timer-track{height:8px}
+      .question-box{padding:10px 12px}
+      .question{min-height:36px;font-size:28px}
+      .player-race-zone{padding:8px}
+      .player-arena .lane{min-height:62px}
+      .player-arena .car{width:58px;height:26px;top:32px}
+      .progress-panel.single-progress{margin-top:6px}
+      input[type="number"]{min-height:44px;font-size:24px}
+      .calc-grid{gap:6px}
+      .calc-key{min-height:38px;font-size:22px;border-radius:12px}
+      .stats{display:none}
+    }
+
+    @media (min-width: 1600px) and (min-height: 900px){
+      .app{width:min(1840px, calc(100% - 56px));padding-top:24px}
+      .player-grid{gap:22px}
+      .player-card{padding:18px;gap:12px}
+      .player-arena .lane{min-height:92px}
+      .player-arena .car{top:47px;width:74px;height:33px}
+      .calc-key{min-height:58px;font-size:30px}
+      .question{font-size:clamp(34px, 2.5vw, 46px);min-height:54px}
+      input[type="number"]{min-height:58px;font-size:34px}
+    }
+
+    @media (max-width: 980px){
+      .app{width:min(100% - 14px, 780px);padding:14px 0 24px}
+      .topbar{gap:12px;margin-bottom:12px}
+      .brand{gap:10px}
+      h1{font-size:clamp(28px, 9vw, 42px)}
+      .subtitle{font-size:12px}
+      .player-card{padding:12px;gap:10px}
+      .player-head{margin-bottom:0}
+      .question-box{padding:12px;margin-bottom:0}
+      .question{font-size:clamp(28px, 9vw, 40px);min-height:44px}
+      .player-race-zone{padding:10px}
+      .player-arena .lane{min-height:72px}
+      .player-arena .car{top:36px;width:60px;height:27px}
+      .answer-row{margin-bottom:0}
+      input[type="number"]{min-height:52px;font-size:26px}
+      .calculator-panel{padding:10px;border-radius:18px}
+      .calc-grid{gap:8px}
+      .calc-key{min-height:54px;font-size:26px;border-radius:14px}
+      .stats{grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px}
+      .stat{min-height:54px;padding:8px}
+    }
+
+    @media (max-width: 560px){
+      .top-actions button,.status-pill{flex:1 1 calc(50% - 8px)}
+      .player-card{padding:10px;border-radius:18px}
+      .player-title{gap:8px}
+      .avatar{width:36px;height:36px;border-radius:13px;font-size:14px}
+      h2{font-size:16px}
+      .level-badge{min-width:68px;padding:7px 9px;font-size:13px}
+      .timer-meta{font-size:11px;margin-bottom:5px}
+      .timer-track{height:9px}
+      .question-label{font-size:10px;margin-bottom:5px}
+      .question{font-size:30px;min-height:38px}
+      .mini-race-header{margin-bottom:7px}
+      .mini-race-header h3{font-size:14px}
+      .mini-race-header p{display:none}
+      .player-arena .lane{min-height:58px;border-radius:16px}
+      .player-arena .car{top:30px;width:54px;height:24px}
+      .lane::after{width:30px;right:6px;top:6px;bottom:6px;font-size:7px;border-radius:9px}
+      .progress-panel.single-progress{margin-top:7px}
+      .progress-card{padding:8px;border-radius:13px}
+      .progress-top{font-size:10px;margin-bottom:5px}
+      .progress-track{height:8px}
+      input[type="number"]{font-size:23px;min-height:48px;padding:9px 10px}
+      .submit-btn{min-width:78px;padding:9px 10px}
+      .calculator-head{font-size:10px;margin-bottom:7px}
+      .calc-grid{gap:7px;grid-template-columns:repeat(4, minmax(0, 1fr))}
+      .calc-key{min-height:46px;font-size:22px;border-radius:12px}
+      .calc-key.zero{grid-column:span 2}
+      .calc-key.go{grid-column:span 2}
+      .stats{grid-template-columns:repeat(3, minmax(0, 1fr));gap:6px}
+      .stat{min-height:46px;padding:7px;border-radius:12px}
+      .stat span{font-size:8px;margin-bottom:2px}
+      .stat strong{font-size:16px}
+    }
+
+  
+
+    /* ==========================================================
+       REVAMP VISUAL: NEON CYBER CIRCUIT UI
+       Catatan: blok ini hanya mengubah tampilan, ID dan sistem JS tetap sama.
+       ========================================================== */
+    :root{
+      --glass-dark:rgba(3, 7, 22, .70);
+      --glass-blue:rgba(0, 174, 255, .12);
+      --glass-pink:rgba(255, 47, 170, .12);
+      --hud-border:rgba(117, 214, 255, .24);
+    }
+
+    body{
+      min-height:100%;
+      background:
+        radial-gradient(circle at 8% 8%, rgba(44,222,255,.25) 0, transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(255,64,203,.25) 0, transparent 30%),
+        radial-gradient(ellipse at 50% 100%, rgba(40,64,255,.24) 0, transparent 42%),
+        linear-gradient(180deg,#02040f 0%, #051230 48%, #02030b 100%);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      opacity:.46;
+      background:
+        linear-gradient(rgba(46,233,255,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,79,216,.07) 1px, transparent 1px),
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,.08), transparent 34%);
+      background-size:54px 54px, 54px 54px, 100% 100%;
+      mask-image:linear-gradient(to bottom, transparent 0%, #000 18%, #000 86%, transparent 100%);
+      transform:perspective(620px) rotateX(62deg) translateY(28vh) scale(1.8);
+      transform-origin:center bottom;
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.7), transparent 18%, transparent 82%, rgba(0,0,0,.7)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 5px);
+      mix-blend-mode:screen;
+      opacity:.34;
+    }
+
+    .app{
+      width:min(1360px, calc(100% - 28px));
+      padding:14px 0 28px;
+    }
+
+    .topbar{
+      position:sticky;
+      top:10px;
+      z-index:10;
+      border:1px solid rgba(82,192,255,.22);
+      border-radius:26px;
+      padding:10px 14px;
+      background:linear-gradient(180deg, rgba(4,11,31,.86), rgba(2,6,20,.72));
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, 0 18px 60px rgba(0,0,0,.42), 0 0 38px rgba(46,233,255,.12);
+      backdrop-filter:blur(20px);
+    }
+
+    .brand{min-width:max-content}
+    .logo{
+      width:52px;height:52px;border-radius:16px;
+      background:transparent;
+      box-shadow:none;
+      overflow:visible;
+    }
+    .logo::before{
+      content:"RACE\A DUEL";
+      white-space:pre;
+      position:absolute;
+      inset:-7px -24px -9px -2px;
+      display:grid;
+      place-items:center;
+      transform:skewX(-12deg);
+      font-size:13px;
+      line-height:.82;
+      font-weight:1000;
+      letter-spacing:.8px;
+      color:#e9fdff;
+      text-shadow:0 0 10px rgba(46,233,255,.85), 0 0 18px rgba(255,79,216,.65);
+      background:linear-gradient(135deg, rgba(46,233,255,.18), rgba(255,79,216,.16));
+      border:1px solid rgba(46,233,255,.26);
+      clip-path:polygon(0 12%, 82% 0, 100% 38%, 74% 100%, 0 92%);
+      border-radius:12px;
+    }
+    .logo::after{display:none}
+    .logo svg{display:none}
+
+    h1{
+      font-size:clamp(22px, 3.2vw, 38px);
+      letter-spacing:-.7px;
+      text-shadow:0 0 14px rgba(46,233,255,.5), 0 0 28px rgba(255,79,216,.24);
+      background:linear-gradient(90deg,#f7fcff,#59eaff 46%,#ff5ddd);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .subtitle{font-size:12px;max-width:600px;color:#b7c7e9}
+
+    .top-actions .status-pill,
+    .top-actions button{
+      border-radius:14px;
+      min-height:40px;
+      border-color:rgba(255,255,255,.13);
+      box-shadow:inset 0 0 18px rgba(255,255,255,.025);
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,#32f1ff 0%,#2879ff 58%,#ff4fd8 130%);
+      color:#020715;
+      text-transform:uppercase;
+    }
+    .btn-ghost{background:rgba(255,255,255,.055)}
+
+    .arena{
+      position:relative;
+      gap:16px;
+    }
+
+    .player-grid.duel-layout{
+      position:relative;
+      grid-template-columns:1fr 1fr;
+      gap:40px;
+      min-height:calc(100vh - 126px);
+      padding:22px;
+      border-radius:32px;
+      overflow:hidden;
+      border:1px solid rgba(76,180,255,.22);
+      background:
+        linear-gradient(90deg, rgba(9,69,112,.45) 0%, rgba(0,0,0,.16) 34%, rgba(0,0,0,.16) 66%, rgba(113,10,83,.45) 100%),
+        radial-gradient(circle at 23% 43%, rgba(46,233,255,.34), transparent 19%),
+        radial-gradient(circle at 78% 43%, rgba(255,79,216,.31), transparent 20%),
+        linear-gradient(180deg, rgba(5,13,38,.90), rgba(2,4,15,.94));
+      box-shadow:0 26px 90px rgba(0,0,0,.56), inset 0 0 60px rgba(46,233,255,.08), inset 0 0 70px rgba(255,79,216,.07);
+      isolation:isolate;
+    }
+
+    .player-grid.duel-layout::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:-2;
+      background:
+        linear-gradient(180deg, transparent 0 18%, rgba(4,12,30,.60) 18% 100%),
+        radial-gradient(ellipse at 50% 25%, rgba(28,50,92,.60) 0 13%, transparent 44%),
+        linear-gradient(90deg, transparent 0 4%, rgba(46,233,255,.22) 4% 4.2%, transparent 4.2% 9%, rgba(255,255,255,.08) 9% 9.1%, transparent 9.1% 15%, rgba(46,233,255,.18) 15% 15.2%, transparent 15.2% 50%, rgba(255,79,216,.18) 84.8% 85%, transparent 85% 91%, rgba(255,255,255,.08) 91% 91.1%, transparent 91.1% 95.8%, rgba(255,79,216,.22) 95.8% 96%, transparent 96%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 82px);
+      opacity:.96;
+    }
+
+    .player-grid.duel-layout::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:0;
+      bottom:0;
+      width:2px;
+      transform:translateX(-50%);
+      z-index:0;
+      background:linear-gradient(to bottom, transparent, rgba(255,255,255,.52) 12%, rgba(255,224,102,.85) 50%, rgba(255,255,255,.52) 88%, transparent);
+      box-shadow:0 0 22px rgba(255,224,102,.6), 0 0 44px rgba(46,233,255,.24);
+      pointer-events:none;
+    }
+
+    .duel-center-hud{
+      position:absolute;
+      z-index:1;
+      pointer-events:none;
+      top:82px;
+      bottom:78px;
+      left:50%;
+      width:76px;
+      transform:translateX(-50%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .duel-vs{
+      width:54px;height:54px;border-radius:50%;
+      display:grid;place-items:center;
+      font-weight:1000;
+      letter-spacing:.08em;
+      color:#06101d;
+      background:linear-gradient(135deg,#f8fdff,#42edff 48%,#ff5dde);
+      box-shadow:0 0 24px rgba(46,233,255,.42), 0 0 36px rgba(255,79,216,.34);
+      border:2px solid rgba(255,255,255,.55);
+    }
+    .duel-check-flag{
+      font-size:30px;
+      filter:drop-shadow(0 0 12px rgba(255,255,255,.55));
+      animation:flagFloat 2.2s ease-in-out infinite;
+    }
+    .duel-check-flag.bottom{animation-delay:-1.1s}
+
+    .card{
+      border-color:rgba(255,255,255,.12);
+      box-shadow:0 22px 70px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.035);
+    }
+
+    .player-card{
+      z-index:2;
+      display:grid;
+      grid-template-rows:auto auto auto minmax(160px, .75fr) auto auto auto;
+      padding:14px;
+      border-radius:28px;
+      background:linear-gradient(180deg, rgba(4,12,31,.62), rgba(3,7,20,.54));
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(10px);
+      min-width:0;
+    }
+    .player-card.p1{
+      background:linear-gradient(180deg, rgba(5,27,62,.70), rgba(2,9,22,.52));
+      border-color:rgba(46,233,255,.28);
+      box-shadow:0 22px 70px rgba(0,0,0,.44), 0 0 38px rgba(46,233,255,.12), inset 0 0 0 1px rgba(46,233,255,.07);
+    }
+    .player-card.p2{
+      background:linear-gradient(180deg, rgba(58,8,45,.70), rgba(21,4,18,.52));
+      border-color:rgba(255,79,216,.28);
+      box-shadow:0 22px 70px rgba(0,0,0,.44), 0 0 38px rgba(255,79,216,.12), inset 0 0 0 1px rgba(255,79,216,.07);
+    }
+    .player-card::before{
+      background:
+        radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 34%),
+        linear-gradient(135deg, rgba(255,255,255,.06), transparent 24% 72%, rgba(255,255,255,.04));
+    }
+
+    .player-head{
+      padding:6px 8px 10px;
+      border-bottom:1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    .player-title{gap:12px}
+    .avatar{
+      width:58px;height:58px;border-radius:50%;
+      background:
+        radial-gradient(circle at 48% 36%, #ffffff 0 5%, transparent 6%),
+        radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--accent) 70%, #fff 10%) 0 36%, #051225 37% 62%, color-mix(in srgb, var(--accent) 95%, #fff 0%) 63% 100%);
+      color:transparent;
+      border:2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      box-shadow:0 0 20px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 -7px 18px rgba(0,0,0,.56);
+      position:relative;
+      overflow:hidden;
+    }
+    .avatar::before{
+      content:"";
+      position:absolute;
+      inset:10px 8px 20px;
+      border-radius:50% 50% 42% 42%;
+      background:linear-gradient(135deg, rgba(255,255,255,.42), rgba(3,13,28,.68) 54%, color-mix(in srgb, var(--accent) 48%, transparent));
+      transform:skewX(-12deg);
+      border:1px solid rgba(255,255,255,.24);
+    }
+    .avatar::after{
+      content:attr(data-initials);
+      position:absolute;
+      left:50%;bottom:6px;
+      transform:translateX(-50%);
+      color:rgba(255,255,255,.82);
+      font-size:8px;font-weight:1000;letter-spacing:.06em;
+    }
+    .player-head h2{
+      font-size:20px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#eaf8ff;
+      text-shadow:0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+    .hint{color:#a7b7da;font-size:11px}
+    .level-badge{
+      color:#fff;
+      min-width:96px;
+      border:1px solid color-mix(in srgb, var(--accent) 48%, transparent);
+      background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, transparent), rgba(255,255,255,.04));
+      text-shadow:0 0 10px color-mix(in srgb, var(--accent) 68%, transparent);
+      box-shadow:0 0 24px color-mix(in srgb, var(--accent) 18%, transparent), inset 0 0 18px rgba(255,255,255,.04);
+    }
+
+    .timer-wrap{
+      padding:0 4px;
+    }
+    .timer-meta{
+      color:#dbe9ff;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .timer-meta span:last-child{
+      font-size:18px;
+      color:#fff;
+      text-shadow:0 0 12px color-mix(in srgb, var(--accent) 70%, transparent);
+    }
+    .timer-track,
+    .progress-track{
+      background:rgba(0,0,0,.40);
+      border-color:color-mix(in srgb, var(--accent) 26%, transparent);
+      box-shadow:inset 0 0 14px rgba(0,0,0,.52), 0 0 16px color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+    .timer-fill,
+    .progress-fill{
+      background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 90%, white 8%), color-mix(in srgb, var(--accent2) 86%, white 4%));
+      box-shadow:0 0 18px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 32px color-mix(in srgb, var(--accent2) 32%, transparent);
+    }
+
+    .question-box{
+      padding:12px 14px;
+      border-radius:20px;
+      background:linear-gradient(180deg, rgba(2,7,18,.80), rgba(10,18,42,.48));
+      border:1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 0 0 28px color-mix(in srgb, var(--accent) 13%, transparent);
+      overflow:hidden;
+    }
+    .question-box::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.5;
+      background:linear-gradient(110deg, transparent, color-mix(in srgb, var(--accent) 16%, transparent), transparent 58%);
+      transform:translateX(-100%);
+      animation:hudScan 4.4s linear infinite;
+    }
+    .question-label{
+      color:color-mix(in srgb, var(--accent) 72%, #fff 28%);
+      text-align:center;
+      font-weight:1000;
+    }
+    .question{
+      justify-content:center;
+      font-size:clamp(28px, 4vw, 48px);
+      min-height:54px;
+      color:#fff;
+      text-shadow:0 0 18px color-mix(in srgb, var(--accent) 50%, transparent), 0 4px 16px rgba(0,0,0,.5);
+    }
+
+    .player-race-zone{
+      min-height:0;
+      border-radius:24px;
+      padding:10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.24)),
+        radial-gradient(circle at 50% 10%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 50%);
+      border:1px solid color-mix(in srgb, var(--accent) 27%, transparent);
+      overflow:hidden;
+      position:relative;
+    }
+    .player-race-zone::before{
+      content:"";
+      position:absolute;
+      inset:10px 10px auto;
+      height:38px;
+      background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+      filter:blur(16px);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .mini-race-header{
+      display:none;
+    }
+
+    .track-shell.single-track{
+      height:100%;
+      min-height:150px;
+      position:relative;
+    }
+
+    .lane{
+      height:100%;
+      min-height:150px !important;
+      border-radius:22px;
+      background:
+        radial-gradient(ellipse at 50% -20%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 38%),
+        linear-gradient(90deg, color-mix(in srgb, var(--accent) 28%, transparent), transparent 15% 85%, color-mix(in srgb, var(--accent2) 24%, transparent)),
+        linear-gradient(180deg, #071735 0%, #040713 52%, #01030a 100%);
+      border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      overflow:hidden;
+      box-shadow:inset 0 0 38px rgba(0,0,0,.62), 0 0 34px color-mix(in srgb, var(--accent) 16%, transparent);
+      clip-path:polygon(0 8%, 100% 0, 100% 92%, 0 100%);
+    }
+    .lane::before{
+      left:0;right:0;top:0;bottom:0;height:auto;
+      background:
+        linear-gradient(180deg, transparent 0 42%, rgba(255,255,255,.14) 42% 44%, transparent 44% 100%),
+        repeating-linear-gradient(90deg, transparent 0 42px, rgba(255,255,255,.24) 42px 74px, transparent 74px 128px),
+        linear-gradient(90deg, color-mix(in srgb, var(--accent) 90%, transparent) 0 4px, transparent 4px calc(100% - 4px), color-mix(in srgb, var(--accent2) 80%, transparent) calc(100% - 4px)),
+        radial-gradient(ellipse at 50% 92%, rgba(255,255,255,.09), transparent 52%);
+      opacity:.95;
+      transform:perspective(520px) rotateX(58deg) translateY(15px) scaleX(1.18);
+      transform-origin:center bottom;
+      animation:roadMove 1.6s linear infinite;
+    }
+    .lane::after{
+      content:"FINISH";
+      right:10px;
+      top:10px;
+      bottom:10px;
+      width:38px;
+      border-radius:14px;
+      background:
+        conic-gradient(#fff 25%, #090909 0 50%, #fff 0 75%, #090909 0) 0 0/18px 18px;
+      color:transparent;
+      box-shadow:0 0 18px rgba(255,255,255,.36), 0 0 28px color-mix(in srgb, var(--accent) 20%, transparent);
+      opacity:.94;
+    }
+    .lane-name{
+      top:12px;
+      left:16px;
+      color:#fff;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-shadow:0 0 12px color-mix(in srgb, var(--accent) 72%, transparent), 0 3px 12px rgba(0,0,0,.75);
+    }
+
+    .car{
+      width:114px !important;
+      height:54px !important;
+      top:50% !important;
+      transform:translateY(-50%);
+      filter:drop-shadow(0 12px 16px rgba(0,0,0,.56)) drop-shadow(0 0 16px color-mix(in srgb, var(--car1) 42%, transparent));
+      transition:left .45s cubic-bezier(.2,.92,.2,1.08), filter .2s ease, transform .2s ease;
+    }
+    .car::after{
+      content:"";
+      position:absolute;
+      left:-44px;
+      top:22px;
+      width:48px;height:11px;
+      border-radius:999px;
+      background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--car1) 42%, transparent), color-mix(in srgb, var(--car1) 92%, #fff 6%));
+      filter:blur(.8px);
+      opacity:.58;
+      transform-origin:right center;
+      animation:engineGlow .24s ease-in-out infinite alternate;
+    }
+    .car-body{
+      inset:15px 13px 14px 13px;
+      border-radius:48% 58% 36% 36% / 58% 58% 42% 42%;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,0) 18%),
+        linear-gradient(135deg, var(--car1), var(--car2));
+      border:1px solid rgba(255,255,255,.32);
+      box-shadow:0 0 26px color-mix(in srgb, var(--car1) 56%, transparent), inset 0 -12px 20px rgba(0,0,0,.32);
+    }
+    .car-body::before{
+      content:"";
+      position:absolute;
+      left:-16px;right:-16px;top:11px;
+      height:12px;
+      background:linear-gradient(90deg, transparent 0 6%, var(--car1) 6% 22%, rgba(255,255,255,.92) 22% 27%, transparent 27% 73%, rgba(255,255,255,.92) 73% 78%, var(--car2) 78% 94%, transparent 94%);
+      border-radius:999px;
+      filter:drop-shadow(0 0 8px color-mix(in srgb, var(--car1) 60%, transparent));
+    }
+    .car-body::after{
+      content:"";
+      position:absolute;
+      right:-20px;
+      top:5px;
+      width:34px;height:16px;
+      clip-path:polygon(0 32%, 100% 0, 82% 100%, 0 68%);
+      background:linear-gradient(135deg, rgba(255,255,255,.65), var(--car2));
+      box-shadow:0 0 16px color-mix(in srgb, var(--car2) 52%, transparent);
+    }
+    .car-top{
+      left:43px;top:8px;
+      width:30px;height:25px;
+      border-radius:50% 50% 42% 42%;
+      background:
+        radial-gradient(circle at 34% 30%, rgba(255,255,255,.9), transparent 10%),
+        linear-gradient(135deg, rgba(255,255,255,.55), rgba(5,10,28,.85) 48%, color-mix(in srgb, var(--car1) 40%, transparent));
+      border:1px solid rgba(255,255,255,.34);
+      box-shadow:0 0 14px rgba(255,255,255,.18), inset 0 -6px 14px rgba(0,0,0,.42);
+    }
+    .car-top::before{
+      content:"";
+      position:absolute;
+      left:-31px;top:10px;
+      width:32px;height:9px;
+      border-radius:999px 6px 6px 999px;
+      background:linear-gradient(90deg, rgba(255,255,255,.84), var(--car1));
+      box-shadow:0 0 12px color-mix(in srgb, var(--car1) 60%, transparent);
+    }
+    .wheel{
+      width:19px;height:19px;bottom:2px;
+      border:4px solid rgba(255,255,255,.55);
+      background:radial-gradient(circle, #1f2a43 0 26%, #02040a 27% 100%);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.08), 0 0 12px rgba(0,0,0,.8);
+    }
+    .wheel.left{left:19px}.wheel.right{right:18px}
+    .car.p1{--car1:#20f2ff;--car2:#1975ff}
+    .car.p2{--car1:#ff46d4;--car2:#ff6e2f}
+    .car.p2 .car-body::after{background:linear-gradient(135deg, rgba(255,255,255,.65), #ff3cc9)}
+    .car.nitro{
+      transform:translateY(-50%) scale(1.06);
+      filter:drop-shadow(0 0 24px var(--car1)) drop-shadow(0 14px 18px rgba(0,0,0,.55));
+    }
+    .car.nitro::before{
+      left:-58px;top:21px;width:60px;height:14px;
+      background:linear-gradient(90deg, transparent, #ffe066, var(--car1));
+      filter:blur(.5px);
+      opacity:1;
+    }
+
+    .progress-card{
+      background:rgba(0,0,0,.25);
+      border-color:color-mix(in srgb, var(--accent) 30%, transparent);
+      border-radius:16px;
+    }
+    .progress-top{color:#dcecff}
+    .progress-top strong{text-shadow:0 0 12px color-mix(in srgb, var(--accent) 70%, transparent)}
+
+    .answer-row{
+      grid-template-columns:1fr 96px;
+    }
+    .answer-row input[readonly]{
+      background:rgba(0,0,0,.36);
+      border-color:color-mix(in srgb, var(--accent) 32%, transparent);
+      box-shadow:inset 0 0 18px rgba(0,0,0,.32), 0 0 18px color-mix(in srgb, var(--accent) 13%, transparent);
+      color:#fff;
+    }
+    .submit-btn{
+      text-transform:uppercase;
+      background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 94%, #fff 2%), color-mix(in srgb, var(--accent2) 92%, #fff 0%));
+      box-shadow:0 14px 30px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    .calculator-panel{
+      border-radius:20px;
+      background:linear-gradient(180deg, rgba(0,0,0,.28), rgba(255,255,255,.04));
+      border-color:color-mix(in srgb, var(--accent) 22%, transparent);
+      box-shadow:inset 0 0 28px rgba(0,0,0,.38);
+      gap:9px;
+    }
+    .calculator-head{display:none}
+    .calc-grid{gap:8px}
+    .calc-key{
+      min-height:48px;
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.055));
+      border:1px solid color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,.08));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 8px 18px rgba(0,0,0,.24);
+      text-shadow:0 0 9px rgba(255,255,255,.22);
+    }
+    .calc-key:hover:not(:disabled), .calc-key:focus-visible:not(:disabled){
+      box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent), 0 14px 28px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    .calc-key.utility{color:#fff;background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 24%, transparent), rgba(255,255,255,.05))}
+    .calc-key.danger{background:linear-gradient(135deg,#ff4b6a,#ff9f43)}
+    .calc-key.go{background:linear-gradient(135deg, var(--accent), var(--accent2));color:#06101d}
+
+    .stats{
+      gap:7px;
+    }
+    .stat{
+      min-height:48px;
+      padding:8px;
+      background:rgba(0,0,0,.22);
+      border-color:rgba(255,255,255,.10);
+      border-radius:14px;
+    }
+    .stat span{font-size:9px;color:#9fb0d4}
+    .stat strong{font-size:17px;color:#fff;text-shadow:0 0 10px color-mix(in srgb, var(--accent) 34%, transparent)}
+
+    .leaderboard-card,
+    .rules .card,
+    .creator-footer{
+      background:linear-gradient(180deg, rgba(5,12,31,.78), rgba(2,6,18,.66));
+      border-color:rgba(92,191,255,.16);
+    }
+
+    @keyframes roadMove{
+      from{background-position:0 0, 0 0, 0 0, 0 0}
+      to{background-position:0 0, -128px 0, 0 0, 0 0}
+    }
+    @keyframes engineGlow{from{transform:scaleX(.72);opacity:.38}to{transform:scaleX(1.18);opacity:.86}}
+    @keyframes hudScan{to{transform:translateX(140%)}}
+    @keyframes flagFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(5deg)}}
+
+    @media (min-width:981px){
+      .app{width:min(1360px, calc(100% - 30px));padding-top:12px}
+      .topbar{margin-bottom:12px}
+      .player-grid.duel-layout{min-height:calc(100vh - 118px);padding:18px;gap:38px;align-items:stretch}
+      .player-card{padding:12px;gap:9px;grid-template-rows:auto auto auto minmax(138px, .78fr) auto auto auto}
+      .question{font-size:clamp(26px, 3vw, 44px);min-height:48px}
+      .track-shell.single-track,.lane{min-height:136px !important}
+      .car{width:104px !important;height:50px !important}
+      .calc-key{min-height:43px;font-size:clamp(18px,1.7vw,24px)}
+      .stats{grid-template-columns:repeat(6,minmax(0,1fr))}
+      .stat{min-height:44px}
+    }
+
+    @media (min-width:981px) and (max-height:820px){
+      .topbar{padding:8px 12px;top:6px}
+      .subtitle,.hint{display:none}
+      .player-grid.duel-layout{min-height:calc(100vh - 86px);padding:12px;gap:34px}
+      .player-card{gap:6px;grid-template-rows:auto auto auto minmax(112px, .7fr) auto auto}
+      .player-head{padding:4px 6px 6px}
+      .avatar{width:44px;height:44px}.player-head h2{font-size:16px}.level-badge{font-size:12px;min-width:76px;padding:7px 9px}
+      .timer-meta span:last-child{font-size:15px}
+      .question-box{padding:8px 11px}.question{font-size:28px;min-height:34px}
+      .track-shell.single-track,.lane{min-height:104px !important}
+      .car{width:88px !important;height:43px !important}
+      .answer-row input[readonly]{min-height:42px;font-size:22px}
+      .submit-btn{min-height:42px}
+      .calculator-panel{padding:7px}.calc-grid{gap:6px}.calc-key{min-height:34px;border-radius:10px;font-size:20px}
+      .stats{display:none}
+      .duel-center-hud{top:56px;bottom:46px}.duel-vs{width:46px;height:46px;font-size:13px}
+    }
+
+    @media (min-width:1600px) and (min-height:900px){
+      .app{width:min(1680px, calc(100% - 56px));padding-top:20px}
+      .player-grid.duel-layout{min-height:calc(100vh - 148px);gap:54px;padding:28px}
+      .player-card{padding:18px;gap:12px;grid-template-rows:auto auto auto minmax(184px,.9fr) auto auto auto}
+      .track-shell.single-track,.lane{min-height:184px !important}
+      .car{width:128px !important;height:60px !important}
+      .calc-key{min-height:58px;font-size:30px}.question{font-size:54px;min-height:66px}
+    }
+
+    @media (max-width:980px){
+      .topbar{position:relative;top:auto;border-radius:22px;align-items:stretch}
+      .brand{min-width:0}
+      .logo::before{inset:-3px -18px -5px -2px;font-size:11px}
+      .player-grid.duel-layout{grid-template-columns:1fr;gap:14px;min-height:auto;padding:12px;border-radius:24px}
+      .player-grid.duel-layout::after,.duel-center-hud{display:none}
+      .player-card{grid-template-rows:auto auto auto auto auto auto auto;border-radius:22px}
+      .track-shell.single-track,.lane{min-height:122px !important}
+      .car{width:88px !important;height:43px !important}
+      .answer-row{grid-template-columns:1fr 88px}
+      .stats{grid-template-columns:repeat(3,1fr)}
+    }
+
+    @media (max-width:560px){
+      .app{width:min(100% - 12px, 780px);padding-top:8px}
+      .topbar{padding:10px;border-radius:18px}
+      .brand{align-items:center}.logo{width:48px;height:42px}
+      .logo::before{inset:-4px -16px -4px -1px;font-size:10px}
+      h1{font-size:28px}.subtitle{display:none}
+      .top-actions{grid-template-columns:1fr 1fr;gap:7px}
+      .top-actions button,.top-actions .status-pill{font-size:11px;padding:9px 8px;min-height:38px}
+      .player-grid.duel-layout{padding:9px;border-radius:18px}
+      .player-card{padding:9px;gap:8px}
+      .avatar{width:42px;height:42px}.player-head h2{font-size:15px}.level-badge{min-width:70px;font-size:12px;padding:7px 8px}
+      .timer-meta span:last-child{font-size:15px}
+      .question-box{padding:8px 10px}.question{font-size:30px;min-height:36px}
+      .track-shell.single-track,.lane{min-height:94px !important;border-radius:16px}
+      .lane::after{width:26px;right:7px;top:7px;bottom:7px;background-size:14px 14px}
+      .car{width:70px !important;height:35px !important}
+      .wheel{width:14px;height:14px;border-width:3px}.wheel.left{left:13px}.wheel.right{right:13px}
+      .car-top{left:27px;top:4px;width:23px;height:20px}.car-body{inset:10px 8px 9px}
+      .car::after{left:-34px;top:15px;width:36px;height:8px}.car.nitro::before{left:-42px;top:15px;width:44px;height:10px}
+      .answer-row{grid-template-columns:1fr 74px;gap:6px}.submit-btn{min-width:74px}
+      .calc-grid{gap:6px}.calc-key{min-height:42px;font-size:20px;border-radius:10px}
+      .stats{grid-template-columns:repeat(3,1fr);gap:5px}.stat{min-height:40px;padding:6px}.stat strong{font-size:14px}.stat span{font-size:7px}
+    }
+
+  
+    /* ==========================================================
+       BUGFIX: mobil/track tidak bergerak terus saat pause/idle.
+       Efek road bergerak hanya muncul sebentar ketika jawaban benar,
+       sedangkan engine glow berhenti saat game dijeda/reset.
+       ========================================================== */
+    .lane::before{
+      animation-play-state:paused !important;
+    }
+    .car::after{
+      animation-play-state:paused !important;
+      opacity:.24 !important;
+      transform:scaleX(.72);
+    }
+    body.race-active .lane.road-boost::before{
+      animation-play-state:running !important;
+    }
+    body.race-active .car.car-boost::after,
+    body.race-active .car.nitro::after{
+      animation-play-state:running !important;
+      opacity:.82 !important;
+    }
+    body.race-paused .lane::before,
+    body.race-idle .lane::before{
+      animation-play-state:paused !important;
+    }
+    body.race-paused .car::after,
+    body.race-idle .car::after{
+      animation-play-state:paused !important;
+      opacity:.16 !important;
+    }
+    body.race-paused .car.nitro::before,
+    body.race-idle .car.nitro::before{
+      display:none !important;
+    }
+
+
+    /* ==========================================================
+       PERFORMANCE POLISH — kualitas visual tetap, render lebih ringan.
+       ========================================================== */
+    .player-grid.duel-layout,
+    .player-card,
+    .player-race-zone,
+    .calculator-panel,
+    .question-box,
+    .stats,
+    .leaderboard-card,
+    .creator-footer{
+      contain:layout paint style;
+    }
+
+    .car,
+    .car *,
+    .lane,
+    .timer-fill,
+    .progress-fill,
+    .calc-key,
+    .submit-btn,
+    .btn-primary,
+    .btn-ghost,
+    .feedback,
+    .toast,
+    .modal-card{
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+      transform-style:preserve-3d;
+    }
+
+    .car{
+      left:18px !important;
+      transform:translate3d(var(--car-x, 0px), -50%, 0) scale(var(--car-scale, 1)) !important;
+      transition:transform .45s cubic-bezier(.2,.92,.2,1.08), filter .2s ease !important;
+      will-change:transform, filter;
+      contain:layout paint style;
+    }
+
+    .car.nitro{
+      transform:translate3d(var(--car-x, 0px), -50%, 0) scale(calc(var(--car-scale, 1) * 1.015)) !important;
+    }
+
+    .timer-fill,
+    .progress-fill{
+      width:100% !important;
+      transform-origin:left center;
+      transform:scaleX(var(--p, 1)) translateZ(0);
+      will-change:transform;
+    }
+
+    .progress-fill{--p:0}
+    .timer-fill{--p:1}
+
+    .calc-key,
+    .submit-btn,
+    .btn-primary,
+    .btn-ghost{
+      will-change:transform, filter, box-shadow;
+      transform:translateZ(0);
+      transition:transform .105s cubic-bezier(.2,.8,.2,1), filter .14s ease, box-shadow .18s ease, background .18s ease !important;
+    }
+
+    .calc-key.is-pressing,
+    .submit-btn.is-pressing,
+    .btn-primary:active:not(:disabled),
+    .btn-ghost:active:not(:disabled){
+      transform:translate3d(0,1px,0) scale(.965) !important;
+      filter:brightness(1.15) saturate(1.08);
+    }
+
+    .calc-key:disabled{
+      pointer-events:none;
+    }
+
+    .question,
+    .timer-meta,
+    .progress-top,
+    .stat strong{
+      text-rendering:geometricPrecision;
+    }
+
+    @media (min-width:1500px){
+      .player-arena .car{--car-scale:1.12}
+    }
+    @media (min-width:981px) and (max-height:820px){
+      .player-arena .car{--car-scale:1}
+    }
+    @media (max-width:560px){
+      .player-arena .car{--car-scale:1}
+    }
+
+  
+
+    @media (prefers-reduced-motion: reduce){
+      *, *::before, *::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+      }
+      .car, .progress-fill, .timer-fill{transition-duration:.01ms !important}
+    }
+
+    @media (max-width: 560px), (pointer: coarse){
+      body::after{opacity:.18}
+      .card, .topbar, .modal{backdrop-filter:blur(8px)}
+      .toast{backdrop-filter:blur(8px)}
+    }
+
+
+/* ==========================================================
+   UNIVERSAL RESPONSIVE + TOUCHSCREEN PATCH v2
+   Target: HP portrait/landscape, tablet/iPad, smart TV, laptop touchscreen.
+   Patch ini sengaja diletakkan paling akhir supaya menimpa CSS lama yang saling bentrok.
+   ========================================================== */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --vh: 1vh;
+}
+
+html{
+  width:100%;
+  min-height:100%;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  overflow-x:hidden;
+}
+
+body{
+  width:100%;
+  min-height:calc(var(--vh) * 100);
+  overscroll-behavior-y:contain;
+}
+
+button,
+.calc-key,
+.mode-card,
+.social-link,
+input,
+.status-pill{
+  -webkit-tap-highlight-color:transparent;
+}
+
+button,
+.calc-key{
+  touch-action:manipulation;
+}
+
+.app{
+  width:min(1440px, calc(100vw - max(14px, var(--safe-left) + var(--safe-right))));
+  padding-left:max(0px, var(--safe-left));
+  padding-right:max(0px, var(--safe-right));
+}
+
+.player-grid.duel-layout,
+.player-card,
+.calculator-panel,
+.question-box,
+.player-race-zone,
+.topbar,
+.modal-card{
+  min-width:0;
+}
+
+.track-shell,
+.lane{
+  width:100%;
+  min-width:0;
+}
+
+.answer-row input[readonly]{
+  caret-color:transparent;
+}
+
+/* Tablet portrait dan semua HP: jangan dipaksa 2 kolom. */
+@media (max-width:1180px) and (orientation:portrait),
+       (max-width:760px){
+  .app{
+    width:min(100% - 12px, 820px) !important;
+    padding-top:8px !important;
+    padding-bottom:20px !important;
+  }
+
+  .topbar{
+    position:relative !important;
+    top:auto !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    padding:10px !important;
+    border-radius:20px !important;
+    margin-bottom:10px !important;
+  }
+
+  .brand{
+    min-width:0 !important;
+    width:100% !important;
+  }
+
+  .brand > div:last-child{
+    min-width:0;
+  }
+
+  .logo{
+    width:42px !important;
+    height:42px !important;
+    flex:0 0 42px;
+  }
+
+  .logo::before{
+    inset:-4px -16px -5px -2px !important;
+    font-size:10px !important;
+  }
+
+  h1{
+    font-size:clamp(23px, 8vw, 34px) !important;
+    line-height:1 !important;
+    word-break:normal;
+  }
+
+  .subtitle{
+    font-size:11px !important;
+    line-height:1.35 !important;
+    margin-top:3px !important;
+  }
+
+  .top-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+  }
+
+  .top-actions .status-pill,
+  .top-actions button{
+    width:100% !important;
+    min-height:42px !important;
+    padding:9px 8px !important;
+    font-size:11px !important;
+    justify-content:center !important;
+    white-space:normal !important;
+    text-align:center !important;
+    border-radius:13px !important;
+  }
+
+  .player-grid.duel-layout{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+    min-height:auto !important;
+    padding:9px !important;
+    border-radius:22px !important;
+    overflow:visible !important;
+  }
+
+  .player-grid.duel-layout::after,
+  .duel-center-hud{
+    display:none !important;
+  }
+
+  .player-card{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:9px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    min-height:auto !important;
+  }
+
+  .player-head{
+    padding:4px 5px 7px !important;
+    gap:7px !important;
+  }
+
+  .avatar{
+    width:36px !important;
+    height:36px !important;
+    flex:0 0 36px;
+  }
+
+  .player-title{
+    min-width:0 !important;
+    gap:8px !important;
+  }
+
+  .player-title h2{
+    font-size:15px !important;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:52vw;
+  }
+
+  .hint{
+    display:none !important;
+  }
+
+  .level-badge{
+    min-width:62px !important;
+    padding:6px 7px !important;
+    font-size:12px !important;
+    border-radius:11px !important;
+  }
+
+  .timer-meta{
+    font-size:10px !important;
+    margin-bottom:4px !important;
+  }
+
+  .timer-track{
+    height:7px !important;
+  }
+
+  .question-box{
+    padding:9px 10px !important;
+    border-radius:15px !important;
+  }
+
+  .question-label{
+    font-size:9px !important;
+    margin-bottom:4px !important;
+    letter-spacing:.08em !important;
+  }
+
+  .question{
+    min-height:34px !important;
+    font-size:clamp(25px, 9vw, 36px) !important;
+    line-height:1.05 !important;
+    justify-content:center !important;
+    text-align:center !important;
+  }
+
+  .player-race-zone{
+    padding:8px !important;
+    border-radius:16px !important;
+  }
+
+  .mini-race-header{
+    margin-bottom:6px !important;
+  }
+
+  .mini-race-header h3{
+    font-size:12px !important;
+  }
+
+  .mini-race-header p{
+    display:none !important;
+  }
+
+  .mini-finish{
+    padding:5px 7px !important;
+    font-size:10px !important;
+    min-height:28px !important;
+  }
+
+  .track-shell.single-track,
+  .lane,
+  .player-arena .lane{
+    min-height:52px !important;
+    height:52px !important;
+    border-radius:14px !important;
+  }
+
+  .lane::after{
+    width:27px !important;
+    right:5px !important;
+    top:5px !important;
+    bottom:5px !important;
+    font-size:6px !important;
+    border-radius:8px !important;
+    background-size:14px 14px !important;
+  }
+
+  .lane-name{
+    top:6px !important;
+    left:8px !important;
+    font-size:8px !important;
+  }
+
+  .car,
+  .player-arena .car{
+    width:50px !important;
+    height:24px !important;
+    top:27px !important;
+  }
+
+  .progress-panel.single-progress{
+    margin-top:6px !important;
+  }
+
+  .progress-card{
+    padding:6px 7px !important;
+    border-radius:12px !important;
+  }
+
+  .progress-top{
+    font-size:10px !important;
+    margin-bottom:4px !important;
+  }
+
+  .progress-track{
+    height:7px !important;
+  }
+
+  .answer-row{
+    grid-template-columns:1fr auto !important;
+    gap:6px !important;
+  }
+
+  .answer-row input[readonly]{
+    min-height:42px !important;
+    padding:7px 8px !important;
+    font-size:22px !important;
+    border-radius:12px !important;
+  }
+
+  .submit-btn{
+    min-width:70px !important;
+    min-height:42px !important;
+    padding:7px 9px !important;
+    border-radius:12px !important;
+    font-size:12px !important;
+  }
+
+  .calculator-panel{
+    padding:7px !important;
+    gap:7px !important;
+    border-radius:15px !important;
+  }
+
+  .calculator-head{
+    font-size:9px !important;
+    letter-spacing:.07em !important;
+    gap:4px !important;
+  }
+
+  .calculator-head span:last-child{
+    font-size:9px !important;
+  }
+
+  .calc-grid{
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:6px !important;
+  }
+
+  .calc-key{
+    min-height:42px !important;
+    border-radius:11px !important;
+    font-size:20px !important;
+  }
+
+  .calc-key.zero,
+  .calc-key.go{
+    grid-column:span 2 !important;
+  }
+
+  .stats{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:5px !important;
+  }
+
+  .stat{
+    min-height:39px !important;
+    padding:5px !important;
+    border-radius:10px !important;
+  }
+
+  .stat span{
+    font-size:7px !important;
+    margin-bottom:1px !important;
+    letter-spacing:.04em !important;
+  }
+
+  .stat strong{
+    font-size:14px !important;
+  }
+
+  .leaderboard-card,
+  .rules .card,
+  .creator-footer{
+    padding:12px !important;
+    border-radius:18px !important;
+  }
+
+  .rules{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .rule-list{
+    font-size:12px !important;
+    gap:7px !important;
+  }
+
+  .leaderboard-table{
+    display:block !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .modal{
+    padding:10px !important;
+    align-items:flex-start !important;
+    overflow:auto !important;
+  }
+
+  .modal-card{
+    margin-top:calc(8px + var(--safe-top)) !important;
+    padding:16px !important;
+    border-radius:22px !important;
+    max-height:calc(var(--vh) * 100 - 20px) !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .setup-grid,
+  .mode-select-grid,
+  .winner-stats{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  .mode-box{
+    min-height:auto !important;
+    padding:11px !important;
+  }
+}
+
+/* HP landscape: harus tetap bisa main tanpa elemen terlalu besar. */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px){
+  .app{
+    width:calc(100vw - 10px) !important;
+    padding:5px 0 8px !important;
+  }
+
+  .topbar{
+    position:relative !important;
+    top:auto !important;
+    display:grid !important;
+    grid-template-columns:auto 1fr !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:6px 8px !important;
+    border-radius:16px !important;
+    margin-bottom:6px !important;
+  }
+
+  .logo{
+    display:none !important;
+  }
+
+  h1{
+    font-size:20px !important;
+    line-height:1 !important;
+  }
+
+  .subtitle{
+    display:none !important;
+  }
+
+  .top-actions{
+    display:grid !important;
+    grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
+    gap:5px !important;
+    width:100% !important;
+  }
+
+  .top-actions .status-pill,
+  .top-actions button{
+    min-height:32px !important;
+    padding:5px 6px !important;
+    font-size:10px !important;
+    border-radius:10px !important;
+    justify-content:center !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+  }
+
+  .player-grid.duel-layout{
+    grid-template-columns:1fr 1fr !important;
+    gap:12px !important;
+    min-height:auto !important;
+    padding:7px !important;
+    border-radius:18px !important;
+    overflow:visible !important;
+  }
+
+  .duel-center-hud{
+    display:none !important;
+  }
+
+  .player-grid.duel-layout::after{
+    display:none !important;
+  }
+
+  .player-card{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:5px !important;
+    padding:7px !important;
+    border-radius:15px !important;
+    min-height:auto !important;
+  }
+
+  .player-head{
+    padding:2px 3px 4px !important;
+  }
+
+  .avatar{
+    width:28px !important;
+    height:28px !important;
+  }
+
+  .player-title{
+    gap:6px !important;
+  }
+
+  .player-title h2{
+    font-size:12px !important;
+    max-width:22vw !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .hint{
+    display:none !important;
+  }
+
+  .level-badge{
+    min-width:54px !important;
+    padding:4px 5px !important;
+    font-size:10px !important;
+    border-radius:9px !important;
+  }
+
+  .timer-meta{
+    font-size:9px !important;
+    margin-bottom:2px !important;
+  }
+
+  .timer-track{
+    height:5px !important;
+  }
+
+  .question-box{
+    padding:5px 7px !important;
+    border-radius:12px !important;
+  }
+
+  .question-label{
+    display:none !important;
+  }
+
+  .question{
+    min-height:24px !important;
+    font-size:clamp(20px, 3.8vw, 28px) !important;
+    line-height:1 !important;
+    justify-content:center !important;
+  }
+
+  .player-race-zone{
+    padding:5px !important;
+    border-radius:12px !important;
+  }
+
+  .mini-race-header{
+    display:none !important;
+  }
+
+  .track-shell.single-track,
+  .lane,
+  .player-arena .lane{
+    min-height:38px !important;
+    height:38px !important;
+    border-radius:11px !important;
+  }
+
+  .lane::after{
+    width:20px !important;
+    top:4px !important;
+    bottom:4px !important;
+    right:4px !important;
+    font-size:0 !important;
+    background-size:10px 10px !important;
+  }
+
+  .lane-name{
+    display:none !important;
+  }
+
+  .car,
+  .player-arena .car{
+    width:42px !important;
+    height:20px !important;
+    top:20px !important;
+  }
+
+  .progress-panel.single-progress{
+    margin-top:4px !important;
+  }
+
+  .progress-card{
+    padding:4px 5px !important;
+    border-radius:9px !important;
+  }
+
+  .progress-top{
+    font-size:9px !important;
+    margin-bottom:2px !important;
+  }
+
+  .progress-track{
+    height:5px !important;
+  }
+
+  .answer-row{
+    grid-template-columns:1fr auto !important;
+    gap:4px !important;
+  }
+
+  .answer-row input[readonly]{
+    min-height:30px !important;
+    padding:4px 6px !important;
+    font-size:18px !important;
+    border-radius:9px !important;
+  }
+
+  .submit-btn{
+    min-width:52px !important;
+    min-height:30px !important;
+    padding:4px 6px !important;
+    font-size:10px !important;
+    border-radius:9px !important;
+  }
+
+  .calculator-panel{
+    padding:5px !important;
+    gap:5px !important;
+    border-radius:12px !important;
+  }
+
+  .calculator-head{
+    display:none !important;
+  }
+
+  .calc-grid{
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:4px !important;
+  }
+
+  .calc-key{
+    min-height:30px !important;
+    border-radius:8px !important;
+    font-size:17px !important;
+  }
+
+  .calc-key.zero,
+  .calc-key.go{
+    grid-column:span 2 !important;
+  }
+
+  .stats{
+    display:none !important;
+  }
+
+  .leaderboard-card,
+  .rules,
+  .creator-footer{
+    display:none !important;
+  }
+
+  .modal{
+    padding:6px !important;
+    align-items:flex-start !important;
+    overflow:auto !important;
+  }
+
+  .modal-card{
+    width:min(680px, 100%) !important;
+    max-height:calc(var(--vh) * 100 - 12px) !important;
+    overflow:auto !important;
+    padding:12px !important;
+    border-radius:18px !important;
+  }
+
+  .mode-select-grid{
+    grid-template-columns:repeat(3, 1fr) !important;
+    gap:7px !important;
+    margin:10px 0 !important;
+  }
+
+  .mode-box{
+    min-height:74px !important;
+    padding:9px !important;
+  }
+
+  .mode-box strong{
+    font-size:12px !important;
+  }
+
+  .mode-box span{
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+
+  .setup-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    margin:10px 0 8px !important;
+  }
+}
+
+/* Tablet/iPad landscape: tetap 2 kolom, tapi elemen dipadatkan. */
+@media (orientation:landscape) and (min-width:761px) and (max-width:1366px) and (min-height:561px){
+  .app{
+    width:calc(100vw - 18px) !important;
+    padding-top:8px !important;
+  }
+
+  .topbar{
+    position:relative !important;
+    top:auto !important;
+    padding:8px 10px !important;
+    margin-bottom:8px !important;
+  }
+
+  h1{
+    font-size:clamp(24px, 3vw, 34px) !important;
+  }
+
+  .subtitle{
+    font-size:11px !important;
+  }
+
+  .top-actions{
+    gap:6px !important;
+  }
+
+  .top-actions .status-pill,
+  .top-actions button{
+    min-height:36px !important;
+    padding:7px 8px !important;
+    font-size:11px !important;
+  }
+
+  .player-grid.duel-layout{
+    grid-template-columns:1fr 1fr !important;
+    gap:22px !important;
+    min-height:auto !important;
+    padding:12px !important;
+    border-radius:24px !important;
+  }
+
+  .duel-center-hud{
+    display:none !important;
+  }
+
+  .player-grid.duel-layout::after{
+    display:none !important;
+  }
+
+  .player-card{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:7px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    min-height:auto !important;
+  }
+
+  .question{
+    min-height:34px !important;
+    font-size:clamp(25px, 3.2vw, 36px) !important;
+  }
+
+  .track-shell.single-track,
+  .lane,
+  .player-arena .lane{
+    min-height:62px !important;
+    height:62px !important;
+  }
+
+  .car,
+  .player-arena .car{
+    width:58px !important;
+    height:27px !important;
+    top:32px !important;
+  }
+
+  .calc-key{
+    min-height:40px !important;
+    font-size:20px !important;
+  }
+
+  .stats{
+    grid-template-columns:repeat(3, minmax(0,1fr)) !important;
+  }
+
+  .stat{
+    min-height:38px !important;
+  }
+
+  .stat span{
+    font-size:7px !important;
+  }
+
+  .stat strong{
+    font-size:14px !important;
+  }
+}
+
+/* TV dan layar besar touchscreen: elemen dibesarkan tapi tetap muat. */
+@media (min-width:1700px){
+  .app{
+    width:min(1840px, calc(100vw - 56px)) !important;
+  }
+
+  .top-actions .status-pill,
+  .top-actions button{
+    min-height:54px !important;
+    font-size:16px !important;
+  }
+
+  .player-grid.duel-layout{
+    gap:56px !important;
+    padding:28px !important;
+  }
+
+  .player-card{
+    padding:22px !important;
+    gap:13px !important;
+  }
+
+  .question{
+    font-size:clamp(42px, 3vw, 58px) !important;
+    min-height:70px !important;
+  }
+
+  .track-shell.single-track,
+  .lane,
+  .player-arena .lane{
+    min-height:128px !important;
+  }
+
+  .car,
+  .player-arena .car{
+    width:114px !important;
+    height:54px !important;
+    top:64px !important;
+  }
+
+  .calc-key{
+    min-height:72px !important;
+    font-size:34px !important;
+  }
+
+  .answer-row input[readonly],
+  .submit-btn{
+    min-height:68px !important;
+  }
+}
+
+/* Bantuan class dari JS */
+html.is-touch .btn-primary:active,
+html.is-touch .btn-ghost:active,
+html.is-touch .calc-key:active,
+html.is-touch .mode-card:active .mode-box{
+  transform:scale(.98) !important;
+}
+
+html[data-device="tv"] .cursor-helper{
+  display:block;
+}
+
+  
+
+    /* ==========================================================
+       FINAL CAR CONSISTENCY PATCH — HP / Tablet / Laptop / TV
+       Tujuan:
+       - HP: mobil kecil tapi jelas.
+       - Tablet: mobil sedang.
+       - Laptop/TV: mobil proporsional, tidak kebesaran.
+       - Rotate layar: posisi dihitung ulang, bentuk mobil tetap sama.
+       Patch ini diletakkan paling akhir agar menimpa CSS lama yang saling bertabrakan.
+       ========================================================== */
+
+    :root{
+      --game-car-w:82px;
+      --game-car-h:39px;
+      --game-lane-h:92px;
+      --game-car-scale:1;
+    }
+
+    .track-shell.single-track,
+    .lane,
+    .player-arena .lane{
+      min-height:var(--game-lane-h) !important;
+      height:var(--game-lane-h) !important;
+    }
+
+    .car,
+    .player-arena .car{
+      left:18px !important;
+      top:50% !important;
+      width:var(--game-car-w) !important;
+      height:var(--game-car-h) !important;
+      transform:translate3d(var(--car-x, 0px), -50%, 0) scale(1) !important;
+      transition:transform .42s cubic-bezier(.2,.92,.2,1.08), filter .18s ease !important;
+      will-change:transform, filter;
+      transform-origin:center center !important;
+      contain:layout paint style;
+    }
+
+    .car.nitro,
+    .player-arena .car.nitro{
+      transform:translate3d(var(--car-x, 0px), -50%, 0) scale(1.018) !important;
+    }
+
+    .car-body{
+      inset:22% 8% 20% 8% !important;
+      border-radius:46% 42% 32% 32% !important;
+    }
+
+    .car-top{
+      left:32% !important;
+      top:2% !important;
+      width:36% !important;
+      height:47% !important;
+      border-radius:48% 48% 14% 14% !important;
+    }
+
+    .wheel{
+      width:calc(var(--game-car-h) * .39) !important;
+      height:calc(var(--game-car-h) * .39) !important;
+      border-width:calc(var(--game-car-h) * .075) !important;
+      bottom:0 !important;
+    }
+
+    .wheel.left{left:18% !important}
+    .wheel.right{right:17% !important}
+
+    .lane::after{
+      width:clamp(28px, 4.5vw, 42px) !important;
+    }
+
+    @media (max-width: 600px){
+      :root{
+        --game-car-w:54px;
+        --game-car-h:26px;
+        --game-lane-h:64px;
+      }
+    }
+
+    @media (max-width: 600px) and (orientation: landscape){
+      :root{
+        --game-car-w:58px;
+        --game-car-h:28px;
+        --game-lane-h:66px;
+      }
+    }
+
+    @media (min-width: 601px) and (max-width: 1180px){
+      :root{
+        --game-car-w:68px;
+        --game-car-h:32px;
+        --game-lane-h:78px;
+      }
+    }
+
+    @media (min-width: 1181px) and (max-width: 1599px){
+      :root{
+        --game-car-w:78px;
+        --game-car-h:37px;
+        --game-lane-h:88px;
+      }
+    }
+
+    @media (min-width: 1600px){
+      :root{
+        --game-car-w:86px;
+        --game-car-h:41px;
+        --game-lane-h:102px;
+      }
+    }
+
+    @media (min-width: 1900px){
+      :root{
+        --game-car-w:92px;
+        --game-car-h:44px;
+        --game-lane-h:108px;
+      }
+    }
+
+    @media (min-width: 981px) and (max-height: 820px){
+      :root{
+        --game-car-w:70px;
+        --game-car-h:33px;
+        --game-lane-h:72px;
+      }
+    }
+
+    @media (max-width: 380px){
+      :root{
+        --game-car-w:50px;
+        --game-car-h:24px;
+        --game-lane-h:60px;
+      }
+    }
+
+
+
+    /* ==========================================================
+       FITUR BARU: Kritik & Saran setelah hasil akhir game
+       - Tidak mengubah sistem game lama
+       - Netlify Forms ready + fallback localStorage/Formspree/EmailJS
+       ========================================================== */
+    .winner-result-card{
+      width:min(780px, 100%);
+      max-height:min(92vh, 940px);
+      overflow-y:auto;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(46,233,255,.65) rgba(255,255,255,.06);
+    }
+    .winner-result-card::-webkit-scrollbar{width:8px}
+    .winner-result-card::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:999px}
+    .winner-result-card::-webkit-scrollbar-thumb{background:linear-gradient(180deg, var(--cyan), var(--pink));border-radius:999px}
+
+    .feedback-section{
+      margin-top:18px;
+      padding:16px;
+      border-radius:24px;
+      text-align:left;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.035)),
+        radial-gradient(circle at 12% 0%, rgba(46,233,255,.20), transparent 40%),
+        radial-gradient(circle at 92% 16%, rgba(255,79,216,.17), transparent 42%);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.035), 0 18px 42px rgba(0,0,0,.24);
+      backdrop-filter:blur(16px);
+    }
+    .feedback-heading{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .feedback-heading h3{
+      margin:0;
+      font-size:clamp(18px, 2.5vw, 24px);
+      letter-spacing:-.3px;
+      background:linear-gradient(90deg, var(--cyan), var(--blue), var(--pink));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      text-transform:uppercase;
+    }
+    .feedback-heading p{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .feedback-mail-pill{
+      flex-shrink:0;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border-radius:999px;
+      color:#06101d;
+      background:linear-gradient(135deg, var(--cyan), var(--pink));
+      font-size:11px;
+      font-weight:1000;
+      box-shadow:0 0 22px rgba(46,233,255,.20);
+      white-space:nowrap;
+    }
+    .feedback-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .feedback-field{
+      display:grid;
+      gap:7px;
+    }
+    .feedback-field.full{grid-column:1 / -1}
+    .feedback-field label,
+    .feedback-label{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:1000;
+      text-transform:uppercase;
+      letter-spacing:.11em;
+    }
+    .feedback-field input,
+    .feedback-field select,
+    .feedback-field textarea{
+      width:100%;
+      color:var(--text);
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.14);
+      outline:none;
+      padding:12px 13px;
+      background:rgba(3,7,22,.54);
+      font-family:inherit;
+      font-size:14px;
+      font-weight:750;
+      transition:.2s ease;
+      box-shadow:inset 0 0 20px rgba(0,0,0,.14);
+    }
+    .feedback-field textarea{
+      min-height:88px;
+      max-height:170px;
+      resize:vertical;
+      line-height:1.5;
+    }
+    .feedback-field select{cursor:pointer}
+    .feedback-field input:focus,
+    .feedback-field select:focus,
+    .feedback-field textarea:focus{
+      border-color:var(--cyan);
+      box-shadow:0 0 0 4px rgba(46,233,255,.12), 0 0 24px rgba(46,233,255,.16);
+    }
+    .rating-stars{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      flex-wrap:wrap;
+      padding:7px;
+      border-radius:16px;
+      background:rgba(3,7,22,.42);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .rating-stars label{
+      display:grid;
+      place-items:center;
+      width:38px;
+      height:38px;
+      border-radius:13px;
+      cursor:pointer;
+      color:rgba(255,255,255,.36);
+      background:rgba(255,255,255,.055);
+      border:1px solid rgba(255,255,255,.08);
+      transition:.18s ease;
+      font-size:21px;
+      line-height:1;
+    }
+    .rating-stars label:hover,
+    .rating-stars label.is-selected{
+      color:var(--yellow);
+      transform:translateY(-2px) scale(1.03);
+      border-color:rgba(255,224,102,.35);
+      box-shadow:0 10px 24px rgba(255,224,102,.16), 0 0 20px rgba(255,224,102,.18);
+    }
+    .rating-stars input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+    .feedback-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:13px;
+    }
+    .feedback-actions button{
+      min-height:42px;
+      padding:11px 14px;
+      border-radius:14px;
+    }
+    .feedback-submit-btn{
+      min-width:178px;
+    }
+    .feedback-message{
+      margin-top:12px;
+      border-radius:15px;
+      padding:10px 12px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.45;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+    .feedback-message[hidden],
+    .feedback-thanks[hidden]{display:none !important}
+    .feedback-message.error{
+      color:#ffd7df;
+      border-color:rgba(255,75,106,.28);
+      background:rgba(255,75,106,.10);
+      box-shadow:0 0 20px rgba(255,75,106,.10);
+    }
+    .feedback-message.success,
+    .feedback-thanks{
+      color:#d8ffe9;
+      border-color:rgba(85,255,154,.28);
+      background:rgba(85,255,154,.10);
+      box-shadow:0 0 20px rgba(85,255,154,.10);
+    }
+    .feedback-message.info{
+      color:#dffbff;
+      border-color:rgba(46,233,255,.25);
+      background:rgba(46,233,255,.09);
+    }
+    .feedback-thanks{
+      margin-top:12px;
+      border-radius:18px;
+      padding:13px;
+      font-size:14px;
+      font-weight:850;
+      line-height:1.5;
+      border:1px solid rgba(85,255,154,.28);
+    }
+    .feedback-section.feedback-sent .feedback-form-fields,
+    .feedback-section.feedback-sent .feedback-submit-btn,
+    .feedback-section.feedback-sent .feedback-skip-btn{
+      display:none;
+    }
+    .feedback-hidden{
+      position:absolute !important;
+      left:-9999px !important;
+      width:1px !important;
+      height:1px !important;
+      overflow:hidden !important;
+    }
+
+    @media (max-width: 720px){
+      .winner-result-card{
+        max-height:92vh;
+        padding:20px;
+        border-radius:24px;
+      }
+      .feedback-heading{flex-direction:column}
+      .feedback-mail-pill{white-space:normal}
+      .feedback-grid{grid-template-columns:1fr}
+      .feedback-field.full{grid-column:auto}
+      .feedback-actions{justify-content:stretch}
+      .feedback-actions button{flex:1 1 100%}
+      .rating-stars{justify-content:space-between}
+      .rating-stars label{width:42px;height:42px}
+    }
+
+</style>
+</head>
+<body>
+  <div class="countdown" id="countdown">3</div>
+  <div class="toast-stack" id="toastStack"></div>
+
+  <main class="app">
+    <section class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 38c2.5-9.5 8.5-16 16-16h14c7.5 0 13.5 6.5 16 16" stroke="#06101d" stroke-width="6" stroke-linecap="round"/>
+            <path d="M16 38h32c3.9 0 7 3.1 7 7v1H9v-1c0-3.9 3.1-7 7-7Z" fill="#06101d"/>
+            <circle cx="20" cy="48" r="6" fill="#06101d" stroke="white" stroke-opacity=".65" stroke-width="3"/>
+            <circle cx="44" cy="48" r="6" fill="#06101d" stroke="white" stroke-opacity=".65" stroke-width="3"/>
+            <path d="M27 26h10l6 10H21l6-10Z" fill="white" fill-opacity=".78"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Race Duel</h1>
+          <p class="subtitle">Balapan matematika 2 pemain dengan tampilan neon circuit, mobil balap futuristik, dan track duel seperti arena arcade.</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <span class="status-pill"><span class="dot" id="liveDot"></span><span id="gameStatus">Siap mulai</span></span>
+        <span class="status-pill">Mode: <b id="currentModePill">SMP</b></span>
+        <button class="btn-primary" id="startBtn">Masukkan Nama / Start</button>
+        <button class="btn-ghost" id="pauseBtn" disabled>Pause</button>
+        <button class="btn-ghost" id="resetBtn">Reset</button>
+        <button class="btn-ghost" id="soundBtn" title="Aktif/nonaktifkan suara">Sound: On</button>
+      </div>
+    </section>
+
+    <section class="arena">
+      <div class="player-grid duel-layout">
+
+        <div class="duel-center-hud" aria-hidden="true">
+          <div class="duel-check-flag">🏁</div>
+          <div class="duel-vs">VS</div>
+          <div class="duel-check-flag bottom">🏁</div>
+        </div>
+        <article class="card player-card p1 player-arena" id="card-p1">
+          <div class="player-head">
+            <div class="player-title">
+              <div class="avatar" id="p1-avatar">P1</div>
+              <div>
+                <h2 id="p1-name-title">Pemain Kiri</h2>
+                <div class="hint">Panel kiri — soal dan race track menyatu di area pemain</div>
+              </div>
+            </div>
+            <div class="level-badge" id="p1-level">Level 1</div>
+          </div>
+
+          <div class="timer-wrap">
+            <div class="timer-meta"><span>Timer</span><span id="p1-time">12.0s</span></div>
+            <div class="timer-track"><div class="timer-fill" id="p1-timer-fill"></div></div>
+          </div>
+
+          <div class="question-box">
+            <div class="question-label" id="p1-question-label">Soal Pemain Kiri</div>
+            <div class="question" id="p1-question">Klik Start</div>
+          </div>
+
+          <div class="player-race-zone">
+            <div class="mini-race-header">
+              <div>
+                <h3>Circuit <span id="lane-name-p1">PEMAIN KIRI</span></h3>
+                <p>Jawaban benar membuat mobilmu melesat di lintasan neon biru.</p>
+              </div>
+              <span class="status-pill mini-finish">Finish: <b id="finishDistance">1000 px</b></span>
+            </div>
+
+            <div class="track-shell single-track">
+              <div class="lane" id="lane-p1">
+                <div class="lane-name" id="lane-name-mobile-p1">PEMAIN KIRI</div>
+                <div class="car p1" id="car-p1" aria-label="Mobil Player 1">
+                  <div class="car-top"></div><div class="car-body"></div><div class="wheel left"></div><div class="wheel right"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-panel single-progress">
+              <div class="progress-card p1">
+                <div class="progress-top"><span id="p1-progress-label">Progress Pemain Kiri</span><strong id="p1-progress-text">0%</strong></div>
+                <div class="progress-track"><div class="progress-fill" id="p1-progress"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <form class="answer-row" data-player="p1">
+            <input id="p1-answer" type="text" inputmode="none" placeholder="Jawaban tampil di sini" autocomplete="off" readonly disabled aria-label="Jawaban pemain kiri" />
+            <button class="submit-btn" type="submit" disabled id="p1-submit">Gas!</button>
+          </form>
+
+          <div class="calculator-panel" data-keypad="p1" aria-label="Kalkulator jawaban pemain kiri">
+            <div class="calculator-head"><span>Kalkulator Jawaban</span><span>Sentuh tombol sendiri</span></div>
+            <div class="calc-grid">
+              <button class="calc-key" type="button" data-player="p1" data-key="7" disabled>7</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="8" disabled>8</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="9" disabled>9</button>
+              <button class="calc-key utility" type="button" data-player="p1" data-key="back" disabled>⌫</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="4" disabled>4</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="5" disabled>5</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="6" disabled>6</button>
+              <button class="calc-key danger" type="button" data-player="p1" data-key="clear" disabled>C</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="1" disabled>1</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="2" disabled>2</button>
+              <button class="calc-key" type="button" data-player="p1" data-key="3" disabled>3</button>
+              <button class="calc-key utility" type="button" data-player="p1" data-key="sign" disabled>±</button>
+              <button class="calc-key zero" type="button" data-player="p1" data-key="0" disabled>0</button>
+              <button class="calc-key go" type="button" data-player="p1" data-key="go" disabled>Go</button>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Score</span><strong id="p1-score">0</strong></div>
+            <div class="stat"><span>Benar</span><strong id="p1-correct">0</strong></div>
+            <div class="stat"><span>Salah</span><strong id="p1-wrong">0</strong></div>
+            <div class="stat"><span>Sisa Nyawa</span><strong id="p1-lives">3</strong></div>
+            <div class="stat"><span>Combo</span><strong id="p1-combo">x0</strong></div>
+            <div class="stat"><span>Akurasi</span><strong id="p1-accuracy">0%</strong></div>
+          </div>
+          <div class="feedback" id="p1-feedback">Correct!</div>
+        </article>
+
+        <article class="card player-card p2 player-arena" id="card-p2">
+          <div class="player-head">
+            <div class="player-title">
+              <div class="avatar" id="p2-avatar">P2</div>
+              <div>
+                <h2 id="p2-name-title">Pemain Kanan</h2>
+                <div class="hint">Panel kanan — soal dan race track menyatu di area pemain</div>
+              </div>
+            </div>
+            <div class="level-badge" id="p2-level">Level 1</div>
+          </div>
+
+          <div class="timer-wrap">
+            <div class="timer-meta"><span>Timer</span><span id="p2-time">12.0s</span></div>
+            <div class="timer-track"><div class="timer-fill" id="p2-timer-fill"></div></div>
+          </div>
+
+          <div class="question-box">
+            <div class="question-label" id="p2-question-label">Soal Pemain Kanan</div>
+            <div class="question" id="p2-question">Klik Start</div>
+          </div>
+
+          <div class="player-race-zone">
+            <div class="mini-race-header">
+              <div>
+                <h3>Circuit <span id="lane-name-p2">PEMAIN KANAN</span></h3>
+                <p>Jawaban benar membuat mobilmu melesat di lintasan neon pink.</p>
+              </div>
+              <span class="status-pill mini-finish">Duel Side</span>
+            </div>
+
+            <div class="track-shell single-track">
+              <div class="lane" id="lane-p2">
+                <div class="lane-name" id="lane-name-mobile-p2">PEMAIN KANAN</div>
+                <div class="car p2" id="car-p2" aria-label="Mobil Player 2">
+                  <div class="car-top"></div><div class="car-body"></div><div class="wheel left"></div><div class="wheel right"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-panel single-progress">
+              <div class="progress-card p2">
+                <div class="progress-top"><span id="p2-progress-label">Progress Pemain Kanan</span><strong id="p2-progress-text">0%</strong></div>
+                <div class="progress-track"><div class="progress-fill" id="p2-progress"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <form class="answer-row" data-player="p2">
+            <input id="p2-answer" type="text" inputmode="none" placeholder="Jawaban tampil di sini" autocomplete="off" readonly disabled aria-label="Jawaban pemain kanan" />
+            <button class="submit-btn" type="submit" disabled id="p2-submit">Gas!</button>
+          </form>
+
+          <div class="calculator-panel" data-keypad="p2" aria-label="Kalkulator jawaban pemain kanan">
+            <div class="calculator-head"><span>Kalkulator Jawaban</span><span>Sentuh tombol sendiri</span></div>
+            <div class="calc-grid">
+              <button class="calc-key" type="button" data-player="p2" data-key="7" disabled>7</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="8" disabled>8</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="9" disabled>9</button>
+              <button class="calc-key utility" type="button" data-player="p2" data-key="back" disabled>⌫</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="4" disabled>4</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="5" disabled>5</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="6" disabled>6</button>
+              <button class="calc-key danger" type="button" data-player="p2" data-key="clear" disabled>C</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="1" disabled>1</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="2" disabled>2</button>
+              <button class="calc-key" type="button" data-player="p2" data-key="3" disabled>3</button>
+              <button class="calc-key utility" type="button" data-player="p2" data-key="sign" disabled>±</button>
+              <button class="calc-key zero" type="button" data-player="p2" data-key="0" disabled>0</button>
+              <button class="calc-key go" type="button" data-player="p2" data-key="go" disabled>Go</button>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Score</span><strong id="p2-score">0</strong></div>
+            <div class="stat"><span>Benar</span><strong id="p2-correct">0</strong></div>
+            <div class="stat"><span>Salah</span><strong id="p2-wrong">0</strong></div>
+            <div class="stat"><span>Sisa Nyawa</span><strong id="p2-lives">3</strong></div>
+            <div class="stat"><span>Combo</span><strong id="p2-combo">x0</strong></div>
+            <div class="stat"><span>Akurasi</span><strong id="p2-accuracy">0%</strong></div>
+          </div>
+          <div class="feedback" id="p2-feedback">Correct!</div>
+        </article>
+      </div>
+
+      <article class="card leaderboard-card">
+        <div class="leaderboard-head">
+          <div>
+            <h3>Leaderboard Pemenang</h3>
+            <p>Riwayat pemenang tersimpan otomatis di browser perangkat ini. Pemenang finish/eliminasi tetap tercatat; hasil seri murni tidak masuk leaderboard.</p>
+          </div>
+          <button class="btn-ghost" id="clearLeaderboardBtn" type="button">Hapus Leaderboard</button>
+        </div>
+        <div id="leaderboardContent">
+          <div class="leaderboard-empty">Belum ada pemenang. Mulai race pertama untuk mengisi leaderboard.</div>
+        </div>
+      </article>
+
+      <section class="rules">
+        <article class="card">
+          <h3>Cara Main</h3>
+          <ul class="rule-list">
+            <li><span class="kbd">👤</span><span>Sebelum mulai, isi <b>nama dua pemain</b>. Nama akan tampil di panel, track, modal pemenang, dan leaderboard.</span></li>
+            <li><span class="kbd">≠</span><span>Soal pemain kiri dan kanan dibuat <b>berbeda</b>, jadi tidak ada soal bersama.</span></li>
+            <li><span class="kbd">−⏱</span><span>Jawaban salah dihitung sebagai kesalahan dan memberi <b>penalti waktu</b> untuk soal berikutnya.</span></li>
+            <li><span class="kbd">💀</span><span>Jika jumlah salah melewati batas level, pemain <b>tereliminasi</b>. Lawan otomatis menang.</span></li>
+            <li><span class="kbd">🏁</span><span>Urutan menang: <b>lawan tereliminasi</b>, <b>finish lebih dulu</b>, lalu tie-break progress/score/akurasi jika mode berakhir tanpa finish.</span></li>
+            <li><span class="kbd">🤝</span><span>Seri hanya terjadi jika <b>progress, score, benar, salah, dan akurasi benar-benar sama</b>. Score sama saja tidak otomatis seri.</span></li>
+            <li><span class="kbd">🔢</span><span>Setiap pemain punya <b>kalkulator jawaban sendiri</b>, cocok untuk layar sentuh HP, laptop, dan TV supaya tidak berebut keyboard.</span></li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>Level & Mode Pertanyaan</h3>
+          <p class="mode-guide" id="modeGuideText">Mode SMP: level 1–6, operasi campuran, tanda kurung, dan waktu lebih cepat.</p>
+          <table class="level-table" aria-label="Tabel level pertanyaan">
+            <thead><tr><th>Level</th><th>Benar</th><th>Waktu</th><th>Batas Salah</th><th>Materi</th></tr></thead>
+            <tbody id="levelTableBody">
+              <tr><td><strong>1</strong></td><td>0–3</td><td>12 detik</td><td>3 kali</td><td>Tambah/kurang</td></tr>
+              <tr><td><strong>2</strong></td><td>4–7</td><td>10 detik</td><td>4 kali</td><td>Perkalian</td></tr>
+              <tr><td><strong>3</strong></td><td>8–12</td><td>8 detik</td><td>5 kali</td><td>Pembagian</td></tr>
+              <tr><td><strong>4</strong></td><td>13–17</td><td>7 detik</td><td>6 kali</td><td>Operasi campuran</td></tr>
+              <tr><td><strong>5</strong></td><td>18–24</td><td>6 detik</td><td>7 kali</td><td>Bilangan besar</td></tr>
+              <tr><td><strong>6</strong></td><td>25+</td><td>5 detik</td><td>8 kali</td><td>Tanda kurung</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <footer class="card creator-footer" aria-label="Footer pembuat game">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <h3>Dibuat oleh <span>Aidil Farhan Rares</span></h3>
+            <p>Math Race Duel — game edukasi matematika interaktif untuk belajar sambil berkompetisi.</p>
+          </div>
+          <nav class="footer-socials" aria-label="Link sosial media Aidil Farhan Rares">
+            <a class="social-link instagram" href="https://www.instagram.com/aidil_farhanres?igsh=M256d2k3Y2p1dmQ0&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram Aidil Farhan Rares" title="Instagram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 2h8.5A5.76 5.76 0 0 1 22 7.75v8.5A5.76 5.76 0 0 1 16.25 22h-8.5A5.76 5.76 0 0 1 2 16.25v-8.5A5.76 5.76 0 0 1 7.75 2Zm0 2A3.75 3.75 0 0 0 4 7.75v8.5A3.75 3.75 0 0 0 7.75 20h8.5A3.75 3.75 0 0 0 20 16.25v-8.5A3.75 3.75 0 0 0 16.25 4h-8.5Zm4.25 3.6A4.4 4.4 0 1 1 7.6 12 4.41 4.41 0 0 1 12 7.6Zm0 2A2.4 2.4 0 1 0 14.4 12 2.4 2.4 0 0 0 12 9.6Zm4.66-3.03a1.03 1.03 0 1 1-1.03 1.03 1.03 1.03 0 0 1 1.03-1.03Z"/></svg>
+            </a>
+            <a class="social-link tiktok" href="https://www.tiktok.com/@busukop?_r=1&_t=ZS-96TrYccRVNy" target="_blank" rel="noopener noreferrer" aria-label="TikTok Aidil Farhan Rares" title="TikTok">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.2 2c.35 2.42 1.72 3.86 4.08 4.02v3.15a7.46 7.46 0 0 1-4.02-1.18v6.75c0 3.42-2.25 5.85-5.67 5.85-3.16 0-5.5-2.06-5.5-5.05 0-3.36 2.82-5.62 6.18-5.08v3.24c-1.4-.43-2.7.28-2.7 1.71 0 1.17.92 1.94 2.1 1.94 1.35 0 2.2-.82 2.2-2.54V2h3.33Z"/></svg>
+            </a>
+            <a class="social-link linkedin" href="https://www.linkedin.com/in/aidil-farhan-rares-76a016228" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Aidil Farhan Rares" title="LinkedIn">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5A2.48 2.48 0 1 1 2.5 5.98 2.48 2.48 0 0 1 4.98 3.5ZM3 8.75h4v11.75H3V8.75Zm6.5 0h3.82v1.6h.06a4.18 4.18 0 0 1 3.76-2.06c4.02 0 4.76 2.65 4.76 6.09v6.12h-4v-5.43c0-1.3-.02-2.96-1.8-2.96-1.81 0-2.09 1.41-2.09 2.86v5.53h-4V8.75Z"/></svg>
+            </a>
+            <a class="social-link youtube" href="https://www.youtube.com/@aidilfarhanrares9399" target="_blank" rel="noopener noreferrer" aria-label="YouTube Aidil Farhan Rares" title="YouTube">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.58 7.19a2.7 2.7 0 0 0-1.9-1.91C18 4.83 12 4.83 12 4.83s-6 0-7.68.45a2.7 2.7 0 0 0-1.9 1.91A28.1 28.1 0 0 0 2 12a28.1 28.1 0 0 0 .42 4.81 2.7 2.7 0 0 0 1.9 1.91c1.68.45 7.68.45 7.68.45s6 0 7.68-.45a2.7 2.7 0 0 0 1.9-1.91A28.1 28.1 0 0 0 22 12a28.1 28.1 0 0 0-.42-4.81ZM10 15.2V8.8l5.55 3.2L10 15.2Z"/></svg>
+            </a>
+          </nav>
+        </div>
+      </footer>
+
+    </section>
+  </main>
+
+  <div class="modal show" id="setupModal" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <div class="modal-card">
+      <div class="winner-icon">🏎️</div>
+      <h2 id="setupTitle">Masukkan Nama Pemain</h2>
+      <p>Isi nama pemain kiri dan kanan dulu. Setelah itu, setiap pemain akan mendapatkan soal matematika yang berbeda.</p>
+      <form id="setupForm">
+        <div class="mode-select-grid" aria-label="Pilih mode tingkat sekolah">
+          <label class="mode-card">
+            <input type="radio" name="game-mode" value="sd" />
+            <div class="mode-box">
+              <strong>Mode SD</strong>
+              <span>Level 1–3, operasi dasar, waktu lebih panjang.</span>
+            </div>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="game-mode" value="smp" checked />
+            <div class="mode-box">
+              <strong>Mode SMP</strong>
+              <span>Level 1–6, operasi campuran, tanda kurung, waktu lebih cepat.</span>
+            </div>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="game-mode" value="sma" />
+            <div class="mode-box">
+              <strong>Mode SMA</strong>
+              <span>Aljabar, persamaan linear, kuadrat, akar, pangkat, dan fungsi.</span>
+            </div>
+          </label>
+        </div>
+        <div class="setup-grid">
+          <div class="name-field">
+            <label for="p1-name-input">Pemain Kiri</label>
+            <input id="p1-name-input" type="text" maxlength="18" placeholder="Contoh: Rares" autocomplete="off" required />
+          </div>
+          <div class="name-field">
+            <label for="p2-name-input">Pemain Kanan</label>
+            <input id="p2-name-input" type="text" maxlength="18" placeholder="Contoh: Farhan" autocomplete="off" required />
+          </div>
+        </div>
+        <div class="setup-note" id="setupModeNote">Pilih mode sesuai tingkat sekolah. Level, jenis soal, batas salah, dan waktu akan otomatis menyesuaikan.</div>
+        <button class="btn-primary" type="submit">Mulai Balapan</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="winnerModal" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+    <div class="modal-card winner-result-card">
+      <div class="winner-icon">🏆</div>
+      <h2 id="winnerTitle">Player Menang!</h2>
+      <p id="winnerText">Mobil berhasil menyentuh garis finish lebih dulu. Finish dan eliminasi tetap menghasilkan pemenang walaupun score sama.</p>
+      <div class="winner-stats">
+        <div><span>Score</span><strong id="winnerScore">0</strong></div>
+        <div><span>Level</span><strong id="winnerLevel">1</strong></div>
+        <div><span>Combo Max</span><strong id="winnerCombo">0</strong></div>
+      </div>
+
+      <section class="feedback-section" id="feedbackSection" aria-labelledby="feedbackTitle">
+        <div class="feedback-heading">
+          <div>
+            <h3 id="feedbackTitle">Beri Kritik &amp; Saran</h3>
+            <p>Bantu tingkatkan Math Race Duel. Feedback akan dikirim lewat Netlify Forms jika sudah dipublish di Netlify.</p>
+          </div>
+          <span class="feedback-mail-pill">📩 aidilfarhanr@gmail.com</span>
+        </div>
+
+        <form id="feedbackForm" name="kritik-saran-game" method="POST" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+          <input type="hidden" name="form-name" value="kritik-saran-game" />
+          <p class="feedback-hidden" aria-hidden="true">
+            <label>Jangan isi bagian ini: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <input type="hidden" name="winnerName" id="feedbackWinnerName" />
+          <input type="hidden" name="scorePlayer1" id="feedbackScoreP1" />
+          <input type="hidden" name="scorePlayer2" id="feedbackScoreP2" />
+          <input type="hidden" name="lastLevel" id="feedbackLastLevel" />
+          <input type="hidden" name="gameMode" id="feedbackGameMode" />
+          <input type="hidden" name="sentAt" id="feedbackSentAt" />
+          <input type="hidden" name="screenInfo" id="feedbackScreenInfo" />
+          <input type="hidden" name="userAgent" id="feedbackUserAgent" />
+
+          <div class="feedback-form-fields">
+            <div class="feedback-grid">
+              <div class="feedback-field">
+                <label for="feedbackPlayerName">Nama pemain</label>
+                <input id="feedbackPlayerName" name="playerName" type="text" maxlength="40" placeholder="Pemain" autocomplete="name" />
+              </div>
+              <div class="feedback-field">
+                <label for="feedbackPlayerEmail">Email pemain <span style="text-transform:none;letter-spacing:0;font-weight:800">(opsional)</span></label>
+                <input id="feedbackPlayerEmail" name="playerEmail" type="email" maxlength="80" placeholder="nama@email.com" autocomplete="email" />
+              </div>
+
+              <div class="feedback-field full">
+                <span class="feedback-label">Rating pengalaman bermain</span>
+                <div class="rating-stars" id="feedbackRatingStars" role="radiogroup" aria-label="Rating pengalaman bermain 1 sampai 5 bintang">
+                  <label title="1 bintang"><input type="radio" name="rating" value="1" />★</label>
+                  <label title="2 bintang"><input type="radio" name="rating" value="2" />★</label>
+                  <label title="3 bintang"><input type="radio" name="rating" value="3" />★</label>
+                  <label title="4 bintang"><input type="radio" name="rating" value="4" />★</label>
+                  <label title="5 bintang"><input type="radio" name="rating" value="5" />★</label>
+                </div>
+              </div>
+
+              <div class="feedback-field full">
+                <label for="feedbackCategory">Kategori feedback</label>
+                <select id="feedbackCategory" name="category">
+                  <option value="Bug / Error">Bug / Error</option>
+                  <option value="Tampilan / Desain">Tampilan / Desain</option>
+                  <option value="Gameplay">Gameplay</option>
+                  <option value="Responsif di HP/Tablet/Laptop/TV">Responsif di HP/Tablet/Laptop/TV</option>
+                  <option value="Saran Fitur Baru">Saran Fitur Baru</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+
+              <div class="feedback-field full">
+                <label for="feedbackMessageInput">Isi kritik/saran</label>
+                <textarea id="feedbackMessageInput" name="message" maxlength="1200" placeholder="Tulis kritik, saran, bug, atau fitur baru yang kamu inginkan..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="feedback-message" id="feedbackMessage" role="status" aria-live="polite" hidden></div>
+          <div class="feedback-thanks" id="feedbackThanks" hidden>Terima kasih! Kritik &amp; saran kamu sudah terkirim. Kamu tetap bisa klik “Main Lagi”.</div>
+
+          <div class="feedback-actions">
+            <button type="button" class="btn-ghost feedback-skip-btn" id="skipFeedbackBtn">Lewati</button>
+            <button type="submit" class="btn-primary feedback-submit-btn" id="feedbackSubmitBtn">Kirim Kritik &amp; Saran</button>
+            <button type="button" class="btn-ghost" id="playAgainBtn">Main Lagi</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    const FINISH_DISTANCE = 1000;
+    const LEADERBOARD_KEY = "math-race-duel-leaderboard-v3";
+    const FEEDBACK_STORAGE_KEY = "math-race-duel-feedback-fallback-v1";
+    const FEEDBACK_CONFIG = {
+      // Prioritas utama untuk Netlify Forms. Form HTML sudah memakai data-netlify="true".
+      netlify:{enabled:true, endpoint:"/", formName:"kritik-saran-game", allowCustomDomain:false},
+
+      // TODO OPSIONAL: Jika tidak memakai Netlify Forms, isi endpoint Formspree kamu di bawah ini.
+      // Contoh: "https://formspree.io/f/xxxxabcd"
+      formspree:{endpoint:""},
+
+      // TODO OPSIONAL: Jika memakai EmailJS, load SDK EmailJS di HTML, lalu isi publicKey/serviceId/templateId.
+      // Jangan pernah isi password email, SMTP password, private key, atau API secret di frontend.
+      emailjs:{enabled:false, publicKey:"", serviceId:"", templateId:""}
+    };
+    const state = {
+      running:false,
+      paused:false,
+      sound:true,
+      mode:"smp",
+      raf:null,
+      lastTick:performance.now(),
+      lastResult:null,
+      players:{
+        p1:createPlayer("p1", "Pemain Kiri"),
+        p2:createPlayer("p2", "Pemain Kanan")
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      startBtn:$("startBtn"), pauseBtn:$("pauseBtn"), resetBtn:$("resetBtn"), soundBtn:$("soundBtn"),
+      gameStatus:$("gameStatus"), liveDot:$("liveDot"), currentModePill:$("currentModePill"), countdown:$("countdown"), winnerModal:$("winnerModal"),
+      winnerTitle:$("winnerTitle"), winnerText:$("winnerText"), winnerScore:$("winnerScore"), winnerLevel:$("winnerLevel"), winnerCombo:$("winnerCombo"), playAgainBtn:$("playAgainBtn"),
+      feedbackSection:$("feedbackSection"), feedbackForm:$("feedbackForm"), feedbackPlayerName:$("feedbackPlayerName"), feedbackPlayerEmail:$("feedbackPlayerEmail"),
+      feedbackCategory:$("feedbackCategory"), feedbackMessageInput:$("feedbackMessageInput"), feedbackRatingStars:$("feedbackRatingStars"),
+      feedbackSubmitBtn:$("feedbackSubmitBtn"), skipFeedbackBtn:$("skipFeedbackBtn"), feedbackMessage:$("feedbackMessage"), feedbackThanks:$("feedbackThanks"),
+      feedbackWinnerName:$("feedbackWinnerName"), feedbackScoreP1:$("feedbackScoreP1"), feedbackScoreP2:$("feedbackScoreP2"), feedbackLastLevel:$("feedbackLastLevel"),
+      feedbackGameMode:$("feedbackGameMode"), feedbackSentAt:$("feedbackSentAt"), feedbackScreenInfo:$("feedbackScreenInfo"), feedbackUserAgent:$("feedbackUserAgent"),
+      toastStack:$("toastStack"), finishDistance:$("finishDistance"),
+      setupModal:$("setupModal"), setupForm:$("setupForm"), p1NameInput:$("p1-name-input"), p2NameInput:$("p2-name-input"), setupModeNote:$("setupModeNote"),
+      leaderboardContent:$("leaderboardContent"), clearLeaderboardBtn:$("clearLeaderboardBtn")
+    };
+
+    /* ==========================================================
+       PERFORMANCE CORE — visual tetap full quality, render dibuat hemat.
+       - DOM cache untuk elemen yang sering di-update
+       - Timer hanya update property yang berubah
+       - Mobil pakai transform GPU, bukan left/layout
+       - Tombol keypad pakai pointerdown agar respons instan
+       ========================================================== */
+    const PERF = {
+      timerPaintMs: 50,
+      soundMinGapMs: 32,
+      resizeTimer:null
+    };
+
+    const uiCache = {
+      players:{},
+      keypad:{p1:[], p2:[]},
+      modeInputs:[],
+      leaderboardHTML:"",
+      lastModeRendered:"",
+      lastRaceVisualKey:""
+    };
+
+    function setText(el, value){
+      if(!el) return;
+      const next = String(value);
+      if(el.textContent !== next) el.textContent = next;
+    }
+
+    function setHTML(el, value){
+      if(!el) return;
+      const next = String(value);
+      if(el.innerHTML !== next) el.innerHTML = next;
+    }
+
+    function setCSS(el, prop, value){
+      if(!el) return;
+      const next = String(value);
+      if(el.style.getPropertyValue(prop) !== next) el.style.setProperty(prop, next);
+    }
+
+    function toggleClass(el, cls, active){
+      if(!el) return;
+      const now = el.classList.contains(cls);
+      if(now !== Boolean(active)) el.classList.toggle(cls, Boolean(active));
+    }
+
+    function buildUiCache(){
+      ["p1", "p2"].forEach(id => {
+        uiCache.players[id] = {
+          question:$(`${id}-question`),
+          level:$(`${id}-level`),
+          score:$(`${id}-score`),
+          combo:$(`${id}-combo`),
+          correct:$(`${id}-correct`),
+          wrong:$(`${id}-wrong`),
+          lives:$(`${id}-lives`),
+          accuracy:$(`${id}-accuracy`),
+          time:$(`${id}-time`),
+          timerFill:$(`${id}-timer-fill`),
+          progress:$(`${id}-progress`),
+          progressText:$(`${id}-progress-text`),
+          lane:$(`lane-${id}`),
+          car:$(`car-${id}`),
+          card:$(`card-${id}`),
+          answer:$(`${id}-answer`),
+          submit:$(`${id}-submit`),
+          feedback:$(`${id}-feedback`),
+          avatar:$(`${id}-avatar`),
+          nameTitle:$(`${id}-name-title`),
+          questionLabel:$(`${id}-question-label`),
+          progressLabel:$(`${id}-progress-label`),
+          laneName:$(`lane-name-${id}`),
+          laneMobile:$(`lane-name-mobile-${id}`),
+          metrics:{laneWidth:0, carWidth:0, maxTravel:0},
+          last:{}
+        };
+        uiCache.keypad[id] = Array.from(document.querySelectorAll(`.calc-key[data-player="${id}"]`));
+      });
+      uiCache.modeInputs = Array.from(document.querySelectorAll('input[name="game-mode"]'));
+      updateAllTrackMetrics();
+    }
+
+    function updateTrackMetrics(id){
+      const dom = uiCache.players[id];
+      if(!dom || !dom.lane || !dom.car) return;
+      const laneWidth = dom.lane.clientWidth || 900;
+      const carWidth = dom.car.clientWidth || 76;
+      const finishReserve = Math.max(54, Math.min(82, laneWidth * .08));
+      const maxLeft = Math.max(18, laneWidth - carWidth - finishReserve);
+      dom.metrics = {
+        laneWidth,
+        carWidth,
+        maxTravel: Math.max(0, maxLeft - 18)
+      };
+      if(state.players && state.players[id]) renderPlayer(state.players[id], true);
+    }
+
+    function updateAllTrackMetrics(){
+      ["p1", "p2"].forEach(updateTrackMetrics);
+    }
+
+    const MODE_CONFIG = {
+      sd:{
+        short:"SD",
+        label:"Mode SD",
+        description:"Mode SD: Level 1–3, fokus penjumlahan, pengurangan, perkalian, pembagian, dengan waktu lebih panjang.",
+        maxLevel:3,
+        times:[0, 18, 16, 14],
+        wrongLimits:[0, 4, 5, 6],
+        penalties:[0, 1, 1.5, 2],
+        rows:[
+          {level:1, benar:"0–3", waktu:"18 detik", batas:"4 kali", materi:"Penjumlahan & pengurangan"},
+          {level:2, benar:"4–7", waktu:"16 detik", batas:"5 kali", materi:"Perkalian dasar"},
+          {level:3, benar:"8+", waktu:"14 detik", batas:"6 kali", materi:"Pembagian dasar"}
+        ]
+      },
+      smp:{
+        short:"SMP",
+        label:"Mode SMP",
+        description:"Mode SMP: Level 1–6, operasi campuran, tanda kurung, dan waktu lebih cepat.",
+        maxLevel:6,
+        times:[0, 12, 10, 8, 7, 6, 5],
+        wrongLimits:[0, 3, 4, 5, 6, 7, 8],
+        penalties:[0, 2, 2.5, 3, 3.5, 4, 4.5],
+        rows:[
+          {level:1, benar:"0–3", waktu:"12 detik", batas:"3 kali", materi:"Tambah/kurang"},
+          {level:2, benar:"4–7", waktu:"10 detik", batas:"4 kali", materi:"Perkalian"},
+          {level:3, benar:"8–12", waktu:"8 detik", batas:"5 kali", materi:"Pembagian"},
+          {level:4, benar:"13–17", waktu:"7 detik", batas:"6 kali", materi:"Operasi campuran"},
+          {level:5, benar:"18–24", waktu:"6 detik", batas:"7 kali", materi:"Bilangan besar"},
+          {level:6, benar:"25+", waktu:"5 detik", batas:"8 kali", materi:"Tanda kurung"}
+        ]
+      },
+      sma:{
+        short:"SMA",
+        label:"Mode SMA",
+        description:"Mode SMA: Level 1–6, berisi aljabar, persamaan linear, kuadrat sederhana, akar, pangkat, dan fungsi sederhana.",
+        maxLevel:6,
+        times:[0, 14, 12, 10, 9, 8, 7],
+        wrongLimits:[0, 3, 4, 5, 6, 7, 8],
+        penalties:[0, 2, 2.5, 3, 3.5, 4, 4.5],
+        rows:[
+          {level:1, benar:"0–3", waktu:"14 detik", batas:"3 kali", materi:"Pangkat & akar dasar"},
+          {level:2, benar:"4–7", waktu:"12 detik", batas:"4 kali", materi:"Persamaan linear sederhana"},
+          {level:3, benar:"8–12", waktu:"10 detik", batas:"5 kali", materi:"Linear ax + b = c"},
+          {level:4, benar:"13–17", waktu:"9 detik", batas:"6 kali", materi:"Fungsi f(x) = ax + b"},
+          {level:5, benar:"18–24", waktu:"8 detik", batas:"7 kali", materi:"Kuadrat & akar"},
+          {level:6, benar:"25+", waktu:"7 detik", batas:"8 kali", materi:"Fungsi kuadrat sederhana"}
+        ]
+      }
+    };
+
+    function getModeConfig(){
+      return MODE_CONFIG[state.mode] || MODE_CONFIG.smp;
+    }
+
+    function maxLevelForMode(){
+      return getModeConfig().maxLevel;
+    }
+
+    function createPlayer(id, name){
+      return {
+        id, name,
+        score:0,
+        correct:0,
+        wrong:0,
+        attempts:0,
+        combo:0,
+        maxCombo:0,
+        level:1,
+        position:0,
+        answer:0,
+        questionText:"Klik Start",
+        timeLimit:12,
+        baseTimeLimit:12,
+        timeLeft:12,
+        pendingPenalty:0,
+        startedAt:0,
+        lastLevel:1,
+        locked:false,
+        eliminated:false,
+        finishReason:""
+      };
+    }
+
+    function randomInt(min, max){
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr){return arr[randomInt(0, arr.length - 1)]}
+
+    function cleanName(value, fallback){
+      const cleaned = String(value || "").trim().replace(/\s+/g, " ").slice(0, 18);
+      return cleaned || fallback;
+    }
+
+    function initials(name){
+      const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+      if(!parts.length) return "?";
+      if(parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function levelFromCorrect(correct){
+      let level = 1;
+      if(correct >= 25) level = 6;
+      else if(correct >= 18) level = 5;
+      else if(correct >= 13) level = 4;
+      else if(correct >= 8) level = 3;
+      else if(correct >= 4) level = 2;
+      return Math.min(level, maxLevelForMode());
+    }
+
+    function timeForLevel(level){
+      const cfg = getModeConfig();
+      const safeLevel = Math.min(level, cfg.maxLevel);
+      return cfg.times[safeLevel] || cfg.times[cfg.maxLevel] || 8;
+    }
+
+    function wrongLimitForLevel(level){
+      const cfg = getModeConfig();
+      const safeLevel = Math.min(level, cfg.maxLevel);
+      return cfg.wrongLimits[safeLevel] || cfg.wrongLimits[cfg.maxLevel] || 8;
+    }
+
+    function penaltyForLevel(level){
+      const cfg = getModeConfig();
+      const safeLevel = Math.min(level, cfg.maxLevel);
+      return cfg.penalties[safeLevel] || cfg.penalties[cfg.maxLevel] || 3;
+    }
+
+    function generateQuestion(level){
+      const safeLevel = Math.min(level, maxLevelForMode());
+      if(state.mode === "sd") return generateSdQuestion(safeLevel);
+      if(state.mode === "sma") return generateSmaQuestion(safeLevel);
+      return generateSmpQuestion(safeLevel);
+    }
+
+    function generateSdQuestion(level){
+      let a,b,answer,text,op;
+      if(level === 1){
+        op = pick(["+", "-"]);
+        a = randomInt(2, 30);
+        b = randomInt(1, 20);
+        if(op === "-" && b > a) [a,b] = [b,a];
+        answer = op === "+" ? a + b : a - b;
+        text = `${a} ${op} ${b} = ?`;
+      } else if(level === 2){
+        op = pick(["×", "+", "-"]);
+        if(op === "×"){
+          a = randomInt(2, 10);
+          b = randomInt(2, 10);
+          answer = a * b;
+        } else {
+          a = randomInt(10, 60);
+          b = randomInt(2, 30);
+          if(op === "-" && b > a) [a,b] = [b,a];
+          answer = op === "+" ? a + b : a - b;
+        }
+        text = `${a} ${op} ${b} = ?`;
+      } else {
+        op = pick(["÷", "×", "+", "-"]);
+        if(op === "÷"){
+          b = randomInt(2, 10);
+          answer = randomInt(2, 12);
+          a = b * answer;
+        } else if(op === "×"){
+          a = randomInt(3, 12);
+          b = randomInt(3, 12);
+          answer = a * b;
+        } else {
+          a = randomInt(20, 90);
+          b = randomInt(5, 45);
+          if(op === "-" && b > a) [a,b] = [b,a];
+          answer = op === "+" ? a + b : a - b;
+        }
+        text = `${a} ${op} ${b} = ?`;
+      }
+      return { text, answer: Math.round(answer) };
+    }
+
+    function generateSmpQuestion(level){
+      let a,b,c,op,answer,text;
+      if(level === 1){
+        op = pick(["+", "-"]);
+        a = randomInt(3, 20);
+        b = randomInt(1, 12);
+        if(op === "-" && b > a) [a,b] = [b,a];
+        answer = op === "+" ? a + b : a - b;
+        text = `${a} ${op} ${b} = ?`;
+      } else if(level === 2){
+        a = randomInt(2, 12);
+        b = randomInt(2, 12);
+        answer = a * b;
+        text = `${a} × ${b} = ?`;
+      } else if(level === 3){
+        b = randomInt(2, 12);
+        answer = randomInt(2, 12);
+        a = b * answer;
+        text = `${a} ÷ ${b} = ?`;
+      } else if(level === 4){
+        const type = randomInt(1, 4);
+        if(type === 1){
+          a = randomInt(8, 35); b = randomInt(2, 12); c = randomInt(2, 9);
+          answer = a + (b * c);
+          text = `${a} + ${b} × ${c} = ?`;
+        } else if(type === 2){
+          b = randomInt(2, 9); c = randomInt(2, 9); a = randomInt(35, 90);
+          answer = a - (b * c);
+          text = `${a} - ${b} × ${c} = ?`;
+        } else if(type === 3){
+          b = randomInt(2, 10); c = randomInt(2, 10); a = b * randomInt(3, 12);
+          answer = (a / b) + c;
+          text = `${a} ÷ ${b} + ${c} = ?`;
+        } else {
+          b = randomInt(2, 9); c = randomInt(2, 12); a = b * randomInt(4, 13);
+          answer = a - (c * b);
+          text = `${a} - ${c} × ${b} = ?`;
+        }
+      } else if(level === 5){
+        const type = randomInt(1, 3);
+        if(type === 1){
+          a = randomInt(70, 180); b = randomInt(30, 120); c = randomInt(15, 90);
+          answer = a + b - c;
+          text = `${a} + ${b} - ${c} = ?`;
+        } else if(type === 2){
+          a = randomInt(11, 24); b = randomInt(6, 12); c = randomInt(12, 60);
+          answer = a * b - c;
+          text = `${a} × ${b} - ${c} = ?`;
+        } else {
+          a = randomInt(40, 130); b = randomInt(5, 35); c = randomInt(2, 9);
+          const d = randomInt(3, 10);
+          answer = a - b + c * d;
+          text = `${a} - ${b} + ${c} × ${d} = ?`;
+        }
+      } else {
+        const type = randomInt(1, 4);
+        if(type === 1){
+          a = randomInt(12, 24); b = randomInt(3, 8); c = randomInt(24, 72); const d = pick([2,3,4,6,8,9,12]);
+          const safeC = c - (c % d);
+          answer = (a * b) - (safeC / d);
+          text = `(${a} × ${b}) - (${safeC} ÷ ${d}) = ?`;
+        } else if(type === 2){
+          a = pick([96,108,120,132,144,156,168]); b = pick([6,8,12]); c = randomInt(7, 13); const d = randomInt(2, 5);
+          answer = (a / b) + c * d;
+          text = `${a} ÷ ${b} + ${c} × ${d} = ?`;
+        } else if(type === 3){
+          a = randomInt(15, 35); b = randomInt(12, 28); c = randomInt(4, 12); const d = randomInt(3, 9);
+          answer = (a + b) * c - d;
+          text = `(${a} + ${b}) × ${c} - ${d} = ?`;
+        } else {
+          b = randomInt(4, 12); const q = randomInt(9, 20); a = b * q; c = randomInt(11, 24); const d = randomInt(2, 9);
+          answer = (a / b) + c - d;
+          text = `${a} ÷ ${b} + ${c} - ${d} = ?`;
+        }
+      }
+      return { text, answer: Math.round(answer) };
+    }
+
+
+    function powerText(base, exp){
+      return `<span class="math-base">${base}</span><sup class="math-exp">${exp}</sup>`;
+    }
+
+    function sqrtText(value){
+      return `<span class="sqrt-wrap" aria-label="akar ${value}"><span class="sqrt-symbol">√</span><span class="sqrt-radicand">${value}</span></span>`;
+    }
+
+    function generateSmaQuestion(level){
+      let a,b,c,d,x,answer,text;
+      if(level === 1){
+        const type = randomInt(1, 3);
+        if(type === 1){
+          a = randomInt(2, 12);
+          answer = a * a;
+          text = `${powerText(a, 2)} = ?`;
+        } else if(type === 2){
+          answer = randomInt(3, 15);
+          a = answer * answer;
+          text = `${sqrtText(a)} = ?`;
+        } else {
+          a = randomInt(2, 8);
+          b = randomInt(2, 4);
+          answer = Math.pow(a, b);
+          text = `${powerText(a, b)} = ?`;
+        }
+      } else if(level === 2){
+        x = randomInt(-12, 12);
+        a = randomInt(3, 25);
+        answer = x;
+        text = `x + ${a} = ${x + a}, x = ?`;
+      } else if(level === 3){
+        x = randomInt(-10, 12);
+        a = randomInt(2, 9);
+        b = randomInt(-15, 15);
+        c = a * x + b;
+        answer = x;
+        text = `${a}x ${b >= 0 ? "+" : "-"} ${Math.abs(b)} = ${c}, x = ?`;
+      } else if(level === 4){
+        a = randomInt(2, 8);
+        b = randomInt(-12, 12);
+        x = randomInt(-6, 9);
+        answer = a * x + b;
+        text = `f(x) = ${a}x ${b >= 0 ? "+" : "-"} ${Math.abs(b)}, f(${x}) = ?`;
+      } else if(level === 5){
+        const type = randomInt(1, 3);
+        if(type === 1){
+          answer = randomInt(2, 15);
+          a = answer * answer;
+          text = `Jika x > 0 dan ${powerText("x", 2)} = ${a}, x = ?`;
+        } else if(type === 2){
+          a = randomInt(3, 12);
+          b = randomInt(2, 6);
+          answer = (a * a) - (b * b);
+          text = `${powerText(a, 2)} - ${powerText(b, 2)} = ?`;
+        } else {
+          answer = randomInt(4, 16);
+          a = answer * answer;
+          b = randomInt(2, 8);
+          text = `${sqrtText(a)} + ${b} = ?`;
+          answer = answer + b;
+        }
+      } else {
+        const type = randomInt(1, 3);
+        if(type === 1){
+          a = randomInt(1, 4);
+          b = randomInt(-8, 8);
+          c = randomInt(-10, 10);
+          x = randomInt(-5, 6);
+          answer = a * x * x + b * x + c;
+          text = `f(x) = ${a}${powerText("x", 2)} ${b >= 0 ? "+" : "-"} ${Math.abs(b)}x ${c >= 0 ? "+" : "-"} ${Math.abs(c)}, f(${x}) = ?`;
+        } else if(type === 2){
+          x = randomInt(-8, 8);
+          a = randomInt(2, 7);
+          b = randomInt(-10, 10);
+          c = a * x + b;
+          answer = x;
+          text = `${a}(x) ${b >= 0 ? "+" : "-"} ${Math.abs(b)} = ${c}, x = ?`;
+        } else {
+          a = randomInt(2, 6);
+          b = randomInt(2, 5);
+          c = randomInt(16, 100);
+          const root = Math.floor(Math.sqrt(c));
+          const square = root * root;
+          answer = Math.pow(a, b) + root;
+          text = `${powerText(a, b)} + ${sqrtText(square)} = ?`;
+        }
+      }
+      return { text, answer: Math.round(answer) };
+    }
+
+    function generateUniqueQuestion(player){
+      const otherId = player.id === "p1" ? "p2" : "p1";
+      const otherText = state.players[otherId]?.questionText;
+      let q = generateQuestion(player.level);
+      let safety = 0;
+      while(q.text === otherText && safety < 20){
+        q = generateQuestion(player.level);
+        safety++;
+      }
+      return q;
+    }
+
+    function newQuestion(player){
+      if(player.eliminated) return;
+      player.level = levelFromCorrect(player.correct);
+      player.baseTimeLimit = timeForLevel(player.level);
+      player.timeLimit = Math.max(3, player.baseTimeLimit - player.pendingPenalty);
+      player.pendingPenalty = 0;
+      player.timeLeft = player.timeLimit;
+      player.startedAt = performance.now();
+      player._lastTimerPct = undefined;
+      player._lastTimeTextAt = 0;
+      const q = generateUniqueQuestion(player);
+      player.questionText = q.text;
+      player.answer = q.answer;
+      player.locked = false;
+
+      const dom = uiCache.players[player.id];
+      if(dom?.answer) dom.answer.value = "";
+      setPlayerInputLocked(player, false);
+      renderPlayer(player, true);
+    }
+
+    function updateNameUI(){
+      Object.values(state.players).forEach(player => {
+        const upper = player.name.toUpperCase();
+        $(`${player.id}-name-title`).textContent = player.name;
+        $(`${player.id}-question-label`).textContent = `Soal ${player.name}`;
+        const avatar = $(`${player.id}-avatar`);
+        if(avatar){
+          const initialText = initials(player.name);
+          avatar.textContent = initialText;
+          avatar.setAttribute("data-initials", initialText);
+          avatar.setAttribute("aria-label", `Avatar ${player.name}`);
+        }
+        $(`lane-name-${player.id}`).textContent = upper;
+        const mobileLaneName = $(`lane-name-mobile-${player.id}`);
+        if(mobileLaneName) mobileLaneName.textContent = upper;
+        $(`${player.id}-progress-label`).textContent = `Progress ${player.name}`;
+        $(`car-${player.id}`).setAttribute("aria-label", `Mobil ${player.name}`);
+      });
+    }
+
+    function renderModeInfo(){
+      const cfg = getModeConfig();
+      const key = `${state.mode}:${cfg.rows.length}`;
+      setText(els.currentModePill, cfg.short);
+
+      const guide = $("modeGuideText");
+      setText(guide, cfg.description);
+      if(els.setupModeNote) setText(els.setupModeNote, `${cfg.label}: ${cfg.description.replace(/^Mode\s\w+:\s*/, "")}`);
+
+      if(uiCache.lastModeRendered !== key){
+        const tableBody = $("levelTableBody");
+        if(tableBody){
+          tableBody.innerHTML = cfg.rows.map(row => `<tr>
+          <td><strong>${row.level}</strong></td>
+          <td>${row.benar}</td>
+          <td>${row.waktu}</td>
+          <td>${row.batas}</td>
+          <td>${row.materi}</td>
+        </tr>`).join("");
+        }
+        uiCache.lastModeRendered = key;
+      }
+
+      uiCache.modeInputs.forEach(input => {
+        const checked = input.value === state.mode;
+        if(input.checked !== checked) input.checked = checked;
+      });
+    }
+
+    function syncRaceVisualState(){
+      const active = Boolean(state.running && !state.paused);
+      const paused = Boolean(state.running && state.paused);
+      const key = `${active ? 1 : 0}:${paused ? 1 : 0}:${state.running ? 1 : 0}`;
+      if(uiCache.lastRaceVisualKey === key) return;
+      uiCache.lastRaceVisualKey = key;
+
+      document.body.classList.toggle("race-active", active);
+      document.body.classList.toggle("race-paused", paused);
+      document.body.classList.toggle("race-idle", !state.running);
+      if(!active){
+        document.querySelectorAll(".road-boost,.car-boost").forEach(el => {
+          el.classList.remove("road-boost", "car-boost");
+        });
+      }
+    }
+
+    function triggerCarBoost(player){
+      const dom = uiCache.players[player.id];
+      const car = dom?.car || $(`car-${player.id}`);
+      const lane = dom?.lane || $(`lane-${player.id}`);
+      if(!car || !lane) return;
+
+      car.classList.remove("car-boost");
+      lane.classList.remove("road-boost");
+      requestAnimationFrame(() => {
+        if(!state.running || state.paused || player.eliminated) return;
+        car.classList.add("car-boost");
+        lane.classList.add("road-boost");
+      });
+
+      clearTimeout(player.boostTimer);
+      player.boostTimer = setTimeout(() => {
+        car.classList.remove("car-boost");
+        lane.classList.remove("road-boost");
+      }, 680);
+    }
+
+    function renderAll(){
+      syncRaceVisualState();
+      updateNameUI();
+      renderModeInfo();
+      Object.values(state.players).forEach(player => renderPlayer(player, true));
+
+      if(!state.running || !uiCache.leaderboardHTML){
+        renderLeaderboard();
+      }
+
+      setText(els.finishDistance, `${FINISH_DISTANCE} px`);
+      setText(els.pauseBtn, state.paused ? "Resume" : "Pause");
+      if(els.pauseBtn) els.pauseBtn.disabled = !state.running;
+      if(els.startBtn) els.startBtn.disabled = state.running;
+      toggleClass(els.liveDot, "live", state.running && !state.paused);
+      setText(els.gameStatus, state.running ? (state.paused ? "Race dijeda" : "Race berjalan") : "Siap mulai");
+      setText(els.soundBtn, `Sound: ${state.sound ? "On" : "Off"}`);
+    }
+
+    function renderTimerOnly(player, now = performance.now(), force = false){
+      const dom = uiCache.players[player.id];
+      if(!dom) return;
+      const timePct = Math.max(0, Math.min(1, player.timeLeft / Math.max(1, player.timeLimit)));
+      const timeText = `${Math.max(0, player.timeLeft).toFixed(1)}s`;
+
+      if(force || Math.abs((player._lastTimerPct ?? -1) - timePct) > .002){
+        setCSS(dom.timerFill, "--p", timePct.toFixed(4));
+        player._lastTimerPct = timePct;
+      }
+
+      if(force || !player._lastTimeTextAt || now - player._lastTimeTextAt >= PERF.timerPaintMs || player.timeLeft <= .2){
+        setText(dom.time, timeText);
+        player._lastTimeTextAt = now;
+      }
+
+      const danger = timePct * 100 <= 28;
+      if(force || player._lastTimerDanger !== danger){
+        toggleClass(dom.timerFill, "danger", danger);
+        player._lastTimerDanger = danger;
+      }
+    }
+
+    function renderPlayer(player, force = false){
+      const id = player.id;
+      const dom = uiCache.players[id];
+      if(!dom) return;
+
+      setHTML(dom.question, player.eliminated ? "TERELIMINASI" : player.questionText);
+      setText(dom.level, `Level ${player.level}`);
+
+      const scoreText = Math.max(0, Math.round(player.score)).toLocaleString("id-ID");
+      setText(dom.score, scoreText);
+      setText(dom.combo, `x${player.combo}`);
+      setText(dom.correct, player.correct);
+      setText(dom.wrong, player.wrong);
+
+      const remaining = Math.max(0, wrongLimitForLevel(player.level) - player.wrong);
+      setText(dom.lives, remaining);
+
+      const accuracy = player.attempts ? Math.round((player.correct / player.attempts) * 100) : 0;
+      setText(dom.accuracy, `${accuracy}%`);
+
+      renderTimerOnly(player, performance.now(), force);
+
+      const progressPct = Math.max(0, Math.min(100, (player.position / FINISH_DISTANCE) * 100));
+      const progressScale = progressPct / 100;
+      setCSS(dom.progress, "--p", progressScale.toFixed(4));
+      setText(dom.progressText, `${Math.round(progressPct)}%`);
+
+      if(force || Math.abs((player._lastProgressPct ?? -1) - progressPct) > .02){
+        if(!dom.metrics || !dom.metrics.laneWidth) updateTrackMetrics(id);
+        const travel = dom.metrics?.maxTravel ?? 0;
+        const x = Math.max(0, travel * progressScale);
+        setCSS(dom.car, "--car-x", `${x.toFixed(2)}px`);
+        player._lastProgressPct = progressPct;
+      }
+
+      const nitro = player.combo >= 3 && state.running && !state.paused && !player.eliminated;
+      if(force || player._lastNitro !== nitro){
+        toggleClass(dom.car, "nitro", nitro);
+        player._lastNitro = nitro;
+      }
+
+      if(force || player._lastEliminated !== player.eliminated){
+        toggleClass(dom.card, "eliminated", player.eliminated);
+        player._lastEliminated = player.eliminated;
+      }
+    }
+
+    function openSetup(){
+      if(state.running) return;
+      els.p1NameInput.value = state.players.p1.name === "Pemain Kiri" ? "" : state.players.p1.name;
+      els.p2NameInput.value = state.players.p2.name === "Pemain Kanan" ? "" : state.players.p2.name;
+      renderModeInfo();
+      els.setupModal.classList.add("show");
+      setTimeout(() => els.p1NameInput.focus(), 80);
+    }
+
+    async function startRaceWithNames(){
+      const selectedMode = document.querySelector('input[name="game-mode"]:checked')?.value || "smp";
+      state.mode = MODE_CONFIG[selectedMode] ? selectedMode : "smp";
+      const p1Name = cleanName(els.p1NameInput.value, "Pemain Kiri");
+      const p2Name = cleanName(els.p2NameInput.value, "Pemain Kanan");
+      if(p1Name.toLowerCase() === p2Name.toLowerCase()){
+        toast("Nama belum valid", "Nama pemain kiri dan kanan harus berbeda.");
+        els.p2NameInput.focus();
+        return;
+      }
+      els.setupModal.classList.remove("show");
+      resetGame(false, {p1:p1Name, p2:p2Name});
+      await showCountdown();
+      state.running = true;
+      state.paused = false;
+      state.lastTick = performance.now();
+      Object.values(state.players).forEach(newQuestion);
+      enableInputs(true);
+      renderAll();
+      toast("Race dimulai", `${p1Name} vs ${p2Name} • ${getModeConfig().label}. Soal dibuat berbeda untuk masing-masing pemain.`);
+      beep(660, .08, "square");
+      loop();
+      setTimeout(() => $("p1-answer").focus(), 80);
+    }
+
+    function showCountdown(){
+      return new Promise(resolve => {
+        let count = 3;
+        els.countdown.textContent = count;
+        els.countdown.classList.add("show");
+        beep(420, .08, "sine");
+        const timer = setInterval(() => {
+          count--;
+          if(count > 0){
+            els.countdown.textContent = count;
+            beep(420 + count * 80, .08, "sine");
+          } else {
+            els.countdown.textContent = "GO!";
+            beep(760, .14, "triangle");
+          }
+          if(count < 0){
+            clearInterval(timer);
+            els.countdown.classList.remove("show");
+            resolve();
+          }
+        }, 720);
+      });
+    }
+
+    function pauseRace(){
+      if(!state.running) return;
+      state.paused = !state.paused;
+      enableInputs(!state.paused);
+      if(!state.paused){
+        const now = performance.now();
+        Object.values(state.players).forEach(p => p.startedAt = now - ((p.timeLimit - p.timeLeft) * 1000));
+        state.lastTick = now;
+        loop();
+        toast("Race dilanjutkan", "Timer kembali berjalan.");
+      } else {
+        cancelAnimationFrame(state.raf);
+        toast("Race dijeda", "Tekan Resume untuk lanjut.");
+      }
+      renderAll();
+    }
+
+    function resetGame(showToast = true, names = null){
+      cancelAnimationFrame(state.raf);
+      state.running = false;
+      state.paused = false;
+      state.lastResult = null;
+      const p1Name = names?.p1 || state.players.p1.name || "Pemain Kiri";
+      const p2Name = names?.p2 || state.players.p2.name || "Pemain Kanan";
+      state.players.p1 = createPlayer("p1", p1Name);
+      state.players.p2 = createPlayer("p2", p2Name);
+      enableInputs(false);
+      els.winnerModal.classList.remove("show");
+      renderAll();
+      if(showToast) toast("Game di-reset", "Skor, combo, salah, dan posisi kembali ke awal.");
+    }
+
+    function setKeypadEnabled(playerId, enabled){
+      const keys = uiCache.keypad[playerId] || [];
+      keys.forEach(button => {
+        const disabled = !enabled;
+        if(button.disabled !== disabled) button.disabled = disabled;
+      });
+    }
+
+    function enableInputs(enabled){
+      ["p1", "p2"].forEach(id => {
+        const player = state.players[id];
+        const dom = uiCache.players[id];
+        const active = Boolean(enabled && !player.eliminated && !player.locked);
+        if(dom?.answer) dom.answer.disabled = !active;
+        if(dom?.submit) dom.submit.disabled = !active;
+        setKeypadEnabled(id, active);
+        toggleClass(dom?.card, "answer-locked", Boolean(player.locked && state.running && !state.paused && !player.eliminated));
+      });
+    }
+
+    function setPlayerInputLocked(player, locked){
+      if(!player) return;
+      player.locked = Boolean(locked);
+      const dom = uiCache.players[player.id];
+      const active = Boolean(state.running && !state.paused && !player.eliminated && !player.locked);
+      if(dom?.answer){
+        dom.answer.disabled = !active;
+        dom.answer.setAttribute("aria-busy", player.locked ? "true" : "false");
+      }
+      if(dom?.submit) dom.submit.disabled = !active;
+      setKeypadEnabled(player.id, active);
+      toggleClass(dom?.card, "answer-locked", Boolean(player.locked && state.running && !state.paused && !player.eliminated));
+    }
+
+    function handleCalculatorInput(playerId, key){
+      const now = performance.now();
+      const tapStamp = `${playerId}:${key}`;
+      if(handleCalculatorInput._lastStamp === tapStamp && now - (handleCalculatorInput._lastAt || 0) < 42) return;
+      handleCalculatorInput._lastStamp = tapStamp;
+      handleCalculatorInput._lastAt = now;
+
+      const player = state.players[playerId];
+      if(!player || !state.running || state.paused || player.locked || player.eliminated) return;
+      const input = uiCache.players[playerId]?.answer || $(`${playerId}-answer`);
+      if(!input) return;
+
+      if(key === "go"){
+        handleSubmit(playerId);
+        return;
+      }
+      if(key === "clear"){
+        if(input.value) input.value = "";
+        beep(360, .03, "sine");
+        return;
+      }
+      if(key === "back"){
+        if(input.value) input.value = input.value.slice(0, -1);
+        beep(340, .03, "sine");
+        return;
+      }
+      if(key === "sign"){
+        if(input.value.startsWith("-")) input.value = input.value.slice(1);
+        else input.value = input.value ? `-${input.value}` : "-";
+        beep(380, .03, "sine");
+        return;
+      }
+      if(/^\d$/.test(key)){
+        const raw = input.value;
+        const negative = raw.startsWith("-");
+        const digits = raw.replace(/^-/, "");
+        const nextDigits = (digits === "0" ? key : digits + key).slice(0, 6);
+        const next = `${negative ? "-" : ""}${nextDigits}`;
+        if(input.value !== next) input.value = next;
+        beep(520, .032, "triangle");
+      }
+    }
+
+    function loop(now = performance.now()){
+      if(!state.running || state.paused) return;
+
+      const players = Object.values(state.players);
+      for(const player of players){
+        if(player.eliminated) continue;
+        player.timeLeft = player.timeLimit - ((now - player.startedAt) / 1000);
+
+        if(player.timeLeft <= 0 && !player.locked){
+          handleTimeout(player);
+        } else {
+          renderTimerOnly(player, now, false);
+        }
+      }
+
+      if(state.running && !state.paused){
+        state.raf = requestAnimationFrame(loop);
+      }
+    }
+
+    function handleSubmit(playerId){
+      const player = state.players[playerId];
+      if(!state.running || state.paused || player.locked || player.eliminated) return;
+      const input = uiCache.players[playerId]?.answer || $(`${playerId}-answer`);
+      if(input.value.trim() === "" || input.value.trim() === "-"){
+        showFeedback(player, "Isi jawaban dulu", "bad");
+        return;
+      }
+      const value = Number(input.value);
+      player.attempts += 1;
+      setPlayerInputLocked(player, true);
+
+      if(Number.isFinite(value) && Math.round(value) === player.answer){
+        handleCorrect(player);
+      } else {
+        handleWrong(player, `Jawaban benar: ${player.answer}`);
+      }
+      renderPlayer(player, true);
+      syncRaceVisualState();
+
+      setTimeout(() => {
+        if(state.running && !state.paused && !player.eliminated){
+          newQuestion(player);
+          input.focus({preventScroll:true});
+        }
+      }, 520);
+    }
+
+    function handleCorrect(player){
+      const oldLevel = player.level;
+      const fast = player.timeLeft >= Math.max(0, player.timeLimit - 3);
+      player.correct += 1;
+      player.combo += 1;
+      player.maxCombo = Math.max(player.maxCombo, player.combo);
+
+      let move = 40;
+      if(fast) move += 20;
+      if(player.combo >= 2) move += 10;
+      if(player.combo >= 3) move += 12;
+      if(player.combo >= 5) move += 14;
+      player.position = Math.min(FINISH_DISTANCE, player.position + move);
+      triggerCarBoost(player);
+
+      const comboBonus = player.combo * 10;
+      const scoreGain = 100 + Math.max(0, Math.round(player.timeLeft * 10)) + comboBonus;
+      player.score += scoreGain;
+      player.level = levelFromCorrect(player.correct);
+
+      showFeedback(player, fast ? `Turbo +${move}px` : `Correct +${move}px`, "good");
+      beep(fast ? 940 : 760, .07, "triangle");
+
+      if(player.combo === 3) toast(`${player.name} Nitro Active!`, "Combo x3 membuka boost ekstra.");
+      if(player.level > oldLevel){
+        showFeedback(player, `LEVEL UP ${player.level}!`, "level");
+        toast(`${player.name} naik ke Level ${player.level}`, `Waktu dasar ${timeForLevel(player.level)} detik, batas salah ${wrongLimitForLevel(player.level)} kali.`);
+        beep(1120, .11, "sawtooth");
+      }
+      if(player.position >= FINISH_DISTANCE) finishRace(player, "finish");
+    }
+
+    function registerWrong(player, kind){
+      player.wrong += 1;
+      player.combo = 0;
+      player.pendingPenalty = penaltyForLevel(player.level);
+      player.position = Math.max(0, player.position - (kind === "timeout" ? 10 : 8));
+      player.score = Math.max(0, player.score - (kind === "timeout" ? 15 : 20));
+      const remaining = wrongLimitForLevel(player.level) - player.wrong;
+      if(remaining <= 0){
+        eliminatePlayer(player, kind);
+        return false;
+      }
+      return true;
+    }
+
+    function handleWrong(player, message){
+      const stillAlive = registerWrong(player, "wrong");
+      showFeedback(player, `Salah! -${penaltyForLevel(player.level)}s`, "bad");
+      const card = $(`card-${player.id}`);
+      card.classList.remove("shake");
+      void card.offsetWidth;
+      card.classList.add("shake");
+      if(stillAlive){
+        const remaining = wrongLimitForLevel(player.level) - player.wrong;
+        toast(`${player.name} salah`, `${message}. Sisa salah: ${remaining} kali. Waktu soal berikutnya dikurangi ${penaltyForLevel(player.level)} detik.`);
+        beep(180, .12, "square");
+      }
+    }
+
+    function handleTimeout(player){
+      setPlayerInputLocked(player, true);
+      player.attempts += 1;
+      const stillAlive = registerWrong(player, "timeout");
+      showFeedback(player, "Time Out!", "bad");
+      if(stillAlive){
+        const remaining = wrongLimitForLevel(player.level) - player.wrong;
+        toast(`${player.name} kehabisan waktu`, `Dihitung salah. Sisa salah: ${remaining} kali. Jawaban benar: ${player.answer}`);
+        beep(120, .14, "sawtooth");
+        setTimeout(() => {
+          if(state.running && !state.paused && !player.eliminated){
+            newQuestion(player);
+          }
+        }, 560);
+      }
+    }
+
+    function eliminatePlayer(player, reason){
+      player.eliminated = true;
+      player.finishReason = reason === "timeout" ? "kehabisan waktu dan melewati batas salah" : "melewati batas jawaban salah";
+      player.combo = 0;
+      player.timeLeft = 0;
+      $(`${player.id}-answer`).disabled = true;
+      $(`${player.id}-submit`).disabled = true;
+      showFeedback(player, "ELIMINATED!", "bad");
+      toast(`${player.name} tereliminasi`, `Batas salah Level ${player.level} adalah ${wrongLimitForLevel(player.level)} kali.`);
+      beep(90, .18, "sawtooth");
+      const opponent = state.players[player.id === "p1" ? "p2" : "p1"];
+      if(opponent && !opponent.eliminated){
+        finishRace(opponent, "elimination", player);
+      } else {
+        const winner = getTiebreakWinner();
+        if(winner){
+          finishRace(winner, "tiebreak", player);
+        } else {
+          finishDraw("score", player);
+        }
+      }
+    }
+
+    function playerAccuracy(player){
+      return player.attempts ? player.correct / player.attempts : 0;
+    }
+
+    function isScoreDraw(){
+      const p1Score = Math.round(state.players.p1.score);
+      const p2Score = Math.round(state.players.p2.score);
+      return p1Score === p2Score;
+    }
+
+    function comparePlayersForTiebreak(a, b){
+      const checks = [
+        a.position - b.position,
+        Math.round(a.score) - Math.round(b.score),
+        a.correct - b.correct,
+        playerAccuracy(a) - playerAccuracy(b),
+        b.wrong - a.wrong,
+        a.maxCombo - b.maxCombo
+      ];
+      for(const diff of checks){
+        if(Math.abs(diff) > 0.0001) return diff > 0 ? 1 : -1;
+      }
+      return 0;
+    }
+
+    function isTrueDraw(){
+      return comparePlayersForTiebreak(state.players.p1, state.players.p2) === 0;
+    }
+
+    function getTiebreakWinner(){
+      const p1 = state.players.p1;
+      const p2 = state.players.p2;
+      const result = comparePlayersForTiebreak(p1, p2);
+      if(result === 0) return null;
+      return result > 0 ? p1 : p2;
+    }
+
+    function resetFeedbackForm(){
+      if(!els.feedbackForm) return;
+      els.feedbackForm.reset();
+      els.feedbackSection?.classList.remove("feedback-sent", "feedback-skipped");
+      if(els.feedbackThanks) els.feedbackThanks.hidden = true;
+      showFeedbackMessage("", "");
+      if(els.feedbackSubmitBtn){
+        els.feedbackSubmitBtn.disabled = false;
+        els.feedbackSubmitBtn.textContent = "Kirim Kritik & Saran";
+      }
+      updateRatingStars();
+    }
+
+    function getFeedbackRating(){
+      return document.querySelector('input[name="rating"]:checked')?.value || "";
+    }
+
+    function updateRatingStars(){
+      const rating = Number(getFeedbackRating() || 0);
+      document.querySelectorAll("#feedbackRatingStars label").forEach((label, index) => {
+        label.classList.toggle("is-selected", index < rating);
+      });
+    }
+
+    function setFeedbackHiddenValue(el, value){
+      if(el) el.value = String(value ?? "");
+    }
+
+    function getModeLabel(){
+      return getModeConfig()?.label || state.mode.toUpperCase();
+    }
+
+    function getWinnerNameFromModal(){
+      const title = els.winnerTitle?.textContent || "";
+      if(title.includes("Hasil Seri")) return "Seri";
+      return title.replace(/\s*Menang!\s*$/i, "").trim() || "Belum diketahui";
+    }
+
+    function prepareFeedbackForm(result = null){
+      resetFeedbackForm();
+      const summary = collectGameSummary(result);
+      const suggestedName = result?.winnerName && result.winnerName !== "Seri"
+        ? result.winnerName
+        : state.players.p1.name || "Pemain";
+      if(els.feedbackPlayerName) els.feedbackPlayerName.value = suggestedName;
+      setFeedbackHiddenValue(els.feedbackWinnerName, summary.winnerName);
+      setFeedbackHiddenValue(els.feedbackScoreP1, summary.scorePlayer1);
+      setFeedbackHiddenValue(els.feedbackScoreP2, summary.scorePlayer2);
+      setFeedbackHiddenValue(els.feedbackLastLevel, summary.lastLevel);
+      setFeedbackHiddenValue(els.feedbackGameMode, summary.gameMode);
+      setFeedbackHiddenValue(els.feedbackSentAt, summary.sentAt);
+      setFeedbackHiddenValue(els.feedbackScreenInfo, summary.screenInfo);
+      setFeedbackHiddenValue(els.feedbackUserAgent, summary.userAgent);
+    }
+
+    function collectGameSummary(result = null){
+      const p1 = state.players.p1;
+      const p2 = state.players.p2;
+      const latest = result || state.lastResult || {};
+      const now = new Date();
+      const screenInfo = `${window.innerWidth}x${window.innerHeight} viewport | ${window.screen?.width || "?"}x${window.screen?.height || "?"} screen | DPR ${window.devicePixelRatio || 1}`;
+      return {
+        "form-name": FEEDBACK_CONFIG.netlify.formName,
+        playerName: cleanName(els.feedbackPlayerName?.value, "Pemain"),
+        playerEmail: String(els.feedbackPlayerEmail?.value || "").trim(),
+        rating: getFeedbackRating(),
+        category: els.feedbackCategory?.value || "Lainnya",
+        message: String(els.feedbackMessageInput?.value || "").trim(),
+        winnerName: latest.winnerName || getWinnerNameFromModal(),
+        scorePlayer1: Math.round(p1.score).toLocaleString("id-ID"),
+        scorePlayer2: Math.round(p2.score).toLocaleString("id-ID"),
+        player1Name: p1.name,
+        player2Name: p2.name,
+        lastLevel: latest.lastLevel || Math.max(p1.level, p2.level),
+        gameMode: latest.gameMode || getModeLabel(),
+        sentAt: now.toLocaleString("id-ID", {dateStyle:"full", timeStyle:"medium"}),
+        sentAtISO: now.toISOString(),
+        screenInfo,
+        userAgent: navigator.userAgent,
+        pageTitle: document.title
+      };
+    }
+
+    function validateFeedback(payload){
+      const errors = [];
+      if(!payload.rating) errors.push("Rating wajib dipilih.");
+      if(!payload.message) errors.push("Kritik/saran tidak boleh kosong.");
+      if(payload.playerEmail && !/^\S+@\S+\.\S+$/.test(payload.playerEmail)) errors.push("Format email belum valid atau kosongkan saja jika tidak ingin mengisi.");
+      return errors;
+    }
+
+    function showFeedbackMessage(type, message){
+      if(!els.feedbackMessage) return;
+      els.feedbackMessage.className = `feedback-message${type ? ` ${type}` : ""}`;
+      els.feedbackMessage.textContent = message || "";
+      els.feedbackMessage.hidden = !message;
+    }
+
+    function saveFeedbackFallback(payload){
+      const saved = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE_KEY) || "[]");
+      saved.push({...payload, savedAt:new Date().toISOString(), fallbackReason:"Pengiriman email/form gagal atau belum dikonfigurasi."});
+      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(saved.slice(-25)));
+    }
+
+    function toFormBody(payload){
+      const body = new URLSearchParams();
+      Object.entries(payload).forEach(([key, value]) => body.append(key, String(value ?? "")));
+      return body.toString();
+    }
+
+    async function sendFeedbackWithNetlify(payload){
+      if(!FEEDBACK_CONFIG.netlify.enabled) throw new Error("Netlify Forms nonaktif.");
+      if(!window.location.protocol.startsWith("http")) throw new Error("Netlify Forms perlu dijalankan lewat http/https.");
+      const host = window.location.hostname;
+      const likelyNetlifyHost = host.endsWith(".netlify.app") || host.includes("netlify") || FEEDBACK_CONFIG.netlify.allowCustomDomain;
+      if(!likelyNetlifyHost) throw new Error("Netlify Forms dilewati karena halaman belum berjalan di domain Netlify.");
+      const response = await fetch(FEEDBACK_CONFIG.netlify.endpoint, {
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:toFormBody(payload)
+      });
+      if(!response.ok) throw new Error(`Netlify Forms gagal: ${response.status}`);
+      return true;
+    }
+
+    async function sendFeedbackWithFormspree(payload){
+      const endpoint = FEEDBACK_CONFIG.formspree.endpoint.trim();
+      if(!endpoint) throw new Error("Endpoint Formspree belum diisi.");
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value ?? "")));
+      formData.append("_subject", "Kritik & Saran Math Race Duel");
+      if(payload.playerEmail) formData.append("_replyto", payload.playerEmail);
+      const response = await fetch(endpoint, {method:"POST", headers:{Accept:"application/json"}, body:formData});
+      if(!response.ok) throw new Error(`Formspree gagal: ${response.status}`);
+      return true;
+    }
+
+    async function sendFeedbackWithEmailJS(payload){
+      const cfg = FEEDBACK_CONFIG.emailjs;
+      if(!cfg.enabled || !cfg.serviceId || !cfg.templateId || !window.emailjs) throw new Error("EmailJS belum dikonfigurasi.");
+      if(cfg.publicKey && typeof window.emailjs.init === "function") window.emailjs.init({publicKey:cfg.publicKey});
+      await window.emailjs.send(cfg.serviceId, cfg.templateId, payload);
+      return true;
+    }
+
+    async function sendFeedback(payload){
+      const methods = [sendFeedbackWithNetlify, sendFeedbackWithFormspree, sendFeedbackWithEmailJS];
+      let lastError = null;
+      for(const method of methods){
+        try{
+          await method(payload);
+          return true;
+        } catch(error){
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("Semua metode pengiriman gagal.");
+    }
+
+    async function handleFeedbackSubmit(event){
+      event.preventDefault();
+      const payload = collectGameSummary();
+      payload.playerName = cleanName(payload.playerName, "Pemain");
+      if(els.feedbackPlayerName) els.feedbackPlayerName.value = payload.playerName;
+
+      const errors = validateFeedback(payload);
+      if(errors.length){
+        showFeedbackMessage("error", errors.join(" "));
+        return;
+      }
+
+      setFeedbackHiddenValue(els.feedbackWinnerName, payload.winnerName);
+      setFeedbackHiddenValue(els.feedbackScoreP1, payload.scorePlayer1);
+      setFeedbackHiddenValue(els.feedbackScoreP2, payload.scorePlayer2);
+      setFeedbackHiddenValue(els.feedbackLastLevel, payload.lastLevel);
+      setFeedbackHiddenValue(els.feedbackGameMode, payload.gameMode);
+      setFeedbackHiddenValue(els.feedbackSentAt, payload.sentAt);
+      setFeedbackHiddenValue(els.feedbackScreenInfo, payload.screenInfo);
+      setFeedbackHiddenValue(els.feedbackUserAgent, payload.userAgent);
+
+      if(els.feedbackSubmitBtn){
+        els.feedbackSubmitBtn.disabled = true;
+        els.feedbackSubmitBtn.textContent = "Mengirim...";
+      }
+      showFeedbackMessage("info", "Mengirim kritik & saran...");
+
+      try{
+        await sendFeedback(payload);
+        showFeedbackMessage("success", "Terima kasih! Kritik & saran kamu sudah terkirim.");
+        if(els.feedbackThanks) els.feedbackThanks.hidden = false;
+        els.feedbackSection?.classList.add("feedback-sent");
+        toast("Feedback terkirim", "Terima kasih! Kritik & saran kamu sudah terkirim.");
+      } catch(error){
+        saveFeedbackFallback(payload);
+        showFeedbackMessage("error", "Gagal mengirim. Kritik & saran disimpan sementara di perangkat ini.");
+        if(els.feedbackSubmitBtn){
+          els.feedbackSubmitBtn.disabled = false;
+          els.feedbackSubmitBtn.textContent = "Kirim Kritik & Saran";
+        }
+        toast("Feedback disimpan lokal", "Endpoint email belum aktif atau koneksi gagal. Data aman di perangkat ini.");
+      }
+    }
+
+    function finishDraw(reason = "score", eliminated = null){
+      state.running = false;
+      state.paused = false;
+      cancelAnimationFrame(state.raf);
+      enableInputs(false);
+      renderAll();
+
+      const p1 = state.players.p1;
+      const p2 = state.players.p2;
+      const score = Math.round(p1.score).toLocaleString("id-ID");
+      const icon = els.winnerModal.querySelector(".winner-icon");
+      if(icon) icon.textContent = "🤝";
+
+      const detail = eliminated
+        ? `Game berakhir setelah kondisi khusus, tetapi indikator kedua pemain masih seimbang.`
+        : `Progress, score, benar, salah, dan akurasi kedua pemain sama.`;
+
+      els.winnerTitle.textContent = "Hasil Seri!";
+      els.winnerText.textContent = `${detail} Score akhir: ${score}. Tidak ada pemenang dan leaderboard tidak bertambah.`;
+      els.winnerScore.textContent = score;
+      els.winnerLevel.textContent = "Seri";
+      els.winnerCombo.textContent = "-";
+      state.lastResult = {
+        winnerName:"Seri",
+        reason,
+        scorePlayer1:Math.round(p1.score),
+        scorePlayer2:Math.round(p2.score),
+        lastLevel:Math.max(p1.level, p2.level),
+        gameMode:getModeLabel()
+      };
+      prepareFeedbackForm(state.lastResult);
+      els.winnerModal.classList.add("show");
+      renderLeaderboard();
+      toast("Pertandingan seri", "Semua indikator tie-break sama. Tidak ada pemenang.");
+      beep(520, .12, "triangle");
+      setTimeout(() => beep(520, .12, "triangle"), 160);
+    }
+
+    function finishRace(winner, reason = "finish", eliminated = null){
+      if(!state.running) return;
+
+      // Prioritas hasil dibuat tegas:
+      // 1) Eliminasi = lawan menang walaupun score sama.
+      // 2) Finish = pemain yang menyentuh garis finish menang walaupun score sama.
+      // 3) Kondisi tie-break baru membandingkan progress, score, benar, akurasi, salah, dan combo.
+      if(reason !== "elimination" && reason !== "finish"){
+        const tiebreakWinner = getTiebreakWinner();
+        if(!tiebreakWinner || isTrueDraw()){
+          finishDraw(reason, eliminated);
+          return;
+        }
+        winner = tiebreakWinner;
+      }
+
+      state.running = false;
+      state.paused = false;
+      cancelAnimationFrame(state.raf);
+      enableInputs(false);
+      renderAll();
+
+      const icon = els.winnerModal.querySelector(".winner-icon");
+      if(icon) icon.textContent = "🏆";
+
+      const reasonText = reason === "finish"
+        ? `${winner.name} mencapai garis finish lebih dulu.`
+        : reason === "elimination"
+          ? `${winner.name} menang karena ${eliminated?.name || "lawan"} tereliminasi.`
+          : `${winner.name} menang berdasarkan tie-break progress, score, akurasi, dan kesalahan.`;
+
+      els.winnerTitle.textContent = `${winner.name} Menang!`;
+      els.winnerText.textContent = `${reasonText} Score akhir ${Math.round(winner.score).toLocaleString("id-ID")}.`;
+      els.winnerScore.textContent = Math.round(winner.score).toLocaleString("id-ID");
+      els.winnerLevel.textContent = winner.level;
+      els.winnerCombo.textContent = `x${winner.maxCombo}`;
+      state.lastResult = {
+        winnerName:winner.name,
+        reason,
+        scorePlayer1:Math.round(state.players.p1.score),
+        scorePlayer2:Math.round(state.players.p2.score),
+        lastLevel:winner.level,
+        gameMode:getModeLabel()
+      };
+      prepareFeedbackForm(state.lastResult);
+      els.winnerModal.classList.add("show");
+      saveLeaderboard(winner, reason, eliminated);
+      renderLeaderboard();
+      celebrate();
+      beep(880, .12, "triangle");
+      setTimeout(() => beep(1180, .12, "triangle"), 130);
+      setTimeout(() => beep(1420, .16, "triangle"), 260);
+    }
+
+    function readLeaderboard(){
+      try{
+        const data = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+        return Array.isArray(data) ? data : [];
+      }catch(err){
+        return [];
+      }
+    }
+
+    function saveLeaderboard(winner, reason, eliminated){
+      if(!winner || reason === "draw") return;
+      const entries = readLeaderboard();
+      entries.push({
+        name:winner.name,
+        score:Math.round(winner.score),
+        level:winner.level,
+        correct:winner.correct,
+        wrong:winner.wrong,
+        maxCombo:winner.maxCombo,
+        reason,
+        mode:getModeConfig().short,
+        opponent: eliminated?.name || (winner.id === "p1" ? state.players.p2.name : state.players.p1.name),
+        date:new Date().toLocaleString("id-ID")
+      });
+      entries.sort((a,b) => {
+        if(b.score !== a.score) return b.score - a.score;
+        if(b.level !== a.level) return b.level - a.level;
+        if(b.correct !== a.correct) return b.correct - a.correct;
+        return a.wrong - b.wrong;
+      });
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, 10)));
+    }
+
+    function renderLeaderboard(){
+      const entries = readLeaderboard();
+      if(!els.leaderboardContent) return;
+      let html = "";
+      if(!entries.length){
+        html = `<div class="leaderboard-empty">Belum ada pemenang. Mulai race pertama untuk mengisi leaderboard.</div>`;
+      } else {
+        const rows = entries.slice(0, 10).map((item, index) => {
+          const reason = item.reason === "finish" ? "Finish" : item.reason === "elimination" ? "Eliminasi" : "Tie-break";
+          return `<tr>
+          <td><strong>#${index + 1}</strong></td>
+          <td><strong>${escapeHtml(item.name)}</strong></td>
+          <td>${Number(item.score).toLocaleString("id-ID")}</td>
+          <td>${item.level}</td>
+          <td>${escapeHtml(item.mode || "-")}</td>
+          <td>${item.correct}/${item.wrong}</td>
+          <td>x${item.maxCombo}</td>
+          <td>${reason}</td>
+        </tr>`;
+        }).join("");
+        html = `<table class="leaderboard-table" aria-label="Leaderboard pemenang">
+        <thead><tr><th>Rank</th><th>Nama</th><th>Score</th><th>Level</th><th>Mode</th><th>Benar/Salah</th><th>Combo</th><th>Menang</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+      }
+
+      if(uiCache.leaderboardHTML !== html){
+        els.leaderboardContent.innerHTML = html;
+        uiCache.leaderboardHTML = html;
+      }
+    }
+
+    function showFeedback(player, text, type){
+      const el = $(`${player.id}-feedback`);
+      el.textContent = text;
+      el.className = `feedback ${type} show`;
+      setTimeout(() => el.classList.remove("show"), 900);
+    }
+
+    function toast(title, message){
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.innerHTML = `<b>${escapeHtml(title)}</b><span>${escapeHtml(message)}</span>`;
+      els.toastStack.appendChild(el);
+      setTimeout(() => el.remove(), 2800);
+    }
+
+    function escapeHtml(value){
+      return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+    }
+
+    function celebrate(){
+      const colors = ["#2ee9ff", "#9b5cff", "#ff4fd8", "#ffe066", "#55ff9a", "#ff9f43"];
+      const confettiCount = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 18 : 46;
+      for(let i=0;i<confettiCount;i++){
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = pick(colors);
+        piece.style.animationDelay = `${Math.random() * .5}s`;
+        piece.style.animationDuration = `${2.1 + Math.random() * 1.6}s`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4100);
+      }
+    }
+
+    let audioCtx;
+    function beep(freq = 440, duration = .08, type = "sine"){
+      if(!state.sound) return;
+      const nowPerf = performance.now();
+      if(beep._lastAt && nowPerf - beep._lastAt < PERF.soundMinGapMs && duration <= .04) return;
+      beep._lastAt = nowPerf;
+
+      try{
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if(audioCtx.state === "suspended") audioCtx.resume?.();
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.075, now + .008);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + duration + .02);
+
+        osc.onended = () => {
+          try{
+            osc.disconnect();
+            gain.disconnect();
+          }catch(_){}
+        };
+      } catch(err){
+        state.sound = false;
+        setText(els.soundBtn, "Sound: Off");
+      }
+    }
+
+    document.querySelectorAll("form[data-player]").forEach(form => {
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        handleSubmit(form.dataset.player);
+      });
+    });
+
+    document.querySelectorAll(".calc-key").forEach(button => {
+      const press = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if(button.disabled) return;
+        button._lastPointerAt = performance.now();
+        button.classList.add("is-pressing");
+        try{ button.setPointerCapture?.(event.pointerId); }catch(_){}
+        handleCalculatorInput(button.dataset.player, button.dataset.key);
+      };
+      const release = () => button.classList.remove("is-pressing");
+
+      button.addEventListener("pointerdown", press, {passive:false});
+      button.addEventListener("pointerup", release, {passive:true});
+      button.addEventListener("pointercancel", release, {passive:true});
+      button.addEventListener("pointerleave", release, {passive:true});
+
+      button.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if(performance.now() - (button._lastPointerAt || 0) < 340) return;
+        handleCalculatorInput(button.dataset.player, button.dataset.key);
+      });
+    });
+
+    document.querySelectorAll('input[name="game-mode"]').forEach(input => {
+      input.addEventListener("change", () => {
+        state.mode = input.value;
+        renderModeInfo();
+      });
+    });
+
+    els.feedbackForm?.addEventListener("submit", handleFeedbackSubmit);
+    document.querySelectorAll('input[name="rating"]').forEach(input => input.addEventListener("change", updateRatingStars));
+    els.skipFeedbackBtn?.addEventListener("click", () => {
+      els.feedbackSection?.classList.add("feedback-skipped");
+      showFeedbackMessage("info", "Kritik & saran dilewati. Kamu tetap bisa klik “Main Lagi”.");
+    });
+
+    els.setupForm.addEventListener("submit", event => {
+      event.preventDefault();
+      startRaceWithNames();
+    });
+
+    els.startBtn.addEventListener("click", openSetup);
+    els.pauseBtn.addEventListener("click", pauseRace);
+    els.resetBtn.addEventListener("click", () => {
+      resetGame(true);
+      openSetup();
+    });
+    els.playAgainBtn.addEventListener("click", () => {
+      els.winnerModal.classList.remove("show");
+      openSetup();
+    });
+    els.clearLeaderboardBtn.addEventListener("click", () => {
+      localStorage.removeItem(LEADERBOARD_KEY);
+      renderLeaderboard();
+      toast("Leaderboard dihapus", "Riwayat pemenang sudah dikosongkan.");
+    });
+    els.soundBtn.addEventListener("click", () => {
+      state.sound = !state.sound;
+      renderAll();
+      if(state.sound) beep(700, .08, "sine");
+    });
+
+    window.addEventListener("resize", () => {
+      clearTimeout(PERF.resizeTimer);
+      PERF.resizeTimer = setTimeout(updateAllTrackMetrics, 90);
+    }, {passive:true});
+    function isTypingTarget(target){
+      return Boolean(target?.closest?.('input, textarea, select, [contenteditable="true"]'));
+    }
+
+    window.addEventListener("keydown", event => {
+      if(isTypingTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+      if(key === "p" && state.running) pauseRace();
+      if(key === "r" && !event.ctrlKey && !event.metaKey){
+        resetGame(true);
+        openSetup();
+      }
+    });
+
+    buildUiCache();
+    renderAll();
+  
+/* ==========================================================
+   UNIVERSAL TOUCH + VIEWPORT PATCH v2
+   Tidak mengubah logic game; hanya memperbaiki tinggi viewport, orientasi,
+   fullscreen, resize track, dan rasa klik di touchscreen/TV.
+   ========================================================== */
+(function(){
+  const root = document.documentElement;
+  const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
+  if(coarse) root.classList.add("is-touch");
+
+  function setViewportVars(){
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    root.style.setProperty("--vh", `${vh * 0.01}px`);
+    root.dataset.orientation = vw > vh ? "landscape" : "portrait";
+
+    let device = "desktop";
+    if(vw >= 1700 && vh >= 850) device = "tv";
+    else if(vw <= 760) device = "phone";
+    else if(vw <= 1180) device = "tablet";
+    root.dataset.device = device;
+
+    if(typeof updateAllTrackMetrics === "function"){
+      clearTimeout(setViewportVars._trackTimer);
+      setViewportVars._trackTimer = setTimeout(() => {
+        try{
+          updateAllTrackMetrics();
+          if(typeof renderAll === "function") renderAll();
+        }catch(err){}
+      }, 120);
+    }
+  }
+
+  setViewportVars();
+  window.addEventListener("resize", setViewportVars, {passive:true});
+  window.addEventListener("orientationchange", () => setTimeout(setViewportVars, 260), {passive:true});
+  document.addEventListener("visibilitychange", () => {
+    if(!document.hidden) setTimeout(setViewportVars, 120);
+  }, {passive:true});
+
+  // Tombol fullscreen untuk laptop touchscreen, tablet, dan smart TV.
+  document.addEventListener("DOMContentLoaded", () => {
+    const topActions = document.querySelector(".top-actions");
+    if(topActions && !document.getElementById("fullscreenBtn")){
+      const btn = document.createElement("button");
+      btn.className = "btn-ghost";
+      btn.id = "fullscreenBtn";
+      btn.type = "button";
+      btn.textContent = "Fullscreen";
+      btn.addEventListener("click", async () => {
+        try{
+          if(!document.fullscreenElement){
+            await document.documentElement.requestFullscreen?.();
+            btn.textContent = "Exit Full";
+          }else{
+            await document.exitFullscreen?.();
+            btn.textContent = "Fullscreen";
+          }
+          setTimeout(setViewportVars, 180);
+        }catch(err){
+          if(typeof toast === "function") toast("Fullscreen tidak aktif", "Browser perangkat ini mungkin membatasi fullscreen.");
+        }
+      });
+      topActions.appendChild(btn);
+    }
+
+    // Hindari double tap zoom pada kalkulator dan tombol game.
+    let lastTap = 0;
+    document.addEventListener("touchend", function(e){
+      const target = e.target;
+      if(!target?.closest?.("button,.calc-key,.mode-card,.social-link")) return;
+      const now = Date.now();
+      if(now - lastTap < 280) e.preventDefault();
+      lastTap = now;
+    }, {passive:false});
+
+    // Saat user menyentuh tombol kalkulator, jangan sampai halaman ikut bergeser.
+    document.querySelectorAll(".calc-key").forEach(btn => {
+      btn.addEventListener("pointerdown", () => {
+        btn.classList.add("touching");
+      }, {passive:true});
+      btn.addEventListener("pointerup", () => {
+        btn.classList.remove("touching");
+      }, {passive:true});
+      btn.addEventListener("pointercancel", () => {
+        btn.classList.remove("touching");
+      }, {passive:true});
+    });
+
+    setTimeout(setViewportVars, 250);
+  });
+})();
+
+  
+
+    /* Final patch: recalculasi posisi mobil saat ukuran layar/orientasi berubah.
+       Bentuk mobil tetap dari CSS, hanya jarak tempuh yang dihitung ulang. */
+    (function(){
+      const rerenderCars = () => {
+        try{
+          if(typeof updateAllTrackMetrics === "function") updateAllTrackMetrics();
+          if(typeof renderAll === "function") renderAll();
+        }catch(e){}
+      };
+      let t = null;
+      const schedule = () => {
+        clearTimeout(t);
+        t = setTimeout(rerenderCars, 180);
+      };
+      window.addEventListener("resize", schedule, {passive:true});
+      window.addEventListener("orientationchange", () => setTimeout(schedule, 260), {passive:true});
+      if(window.visualViewport){
+        window.visualViewport.addEventListener("resize", schedule, {passive:true});
+      }
+      document.addEventListener("fullscreenchange", schedule, {passive:true});
+      document.addEventListener("DOMContentLoaded", () => setTimeout(rerenderCars, 320), {once:true});
+    })();
+
+</script>
+</body>
+</html>
