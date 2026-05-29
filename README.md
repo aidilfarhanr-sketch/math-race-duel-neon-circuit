@@ -68,4 +68,3 @@ Project ini dibuat sebagai game edukasi interaktif yang menggabungkan pembelajar
 ##  Dukungan
 Jika kamu suka project ini, jangan lupa beri bintang pada repository ini dan bagikan link game ke teman-temanmu.
 
-Jika kamu suka project ini, jangan lupa beri bintang pada repository ini dan bagikan link game ke teman-temanmu.
